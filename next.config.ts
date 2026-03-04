@@ -12,10 +12,7 @@ const nextConfig: NextConfig = {
         hostname: 'images.unsplash.com',
       },
     ],
-    // Temporary: route through proxy until existing HEIC images are migrated to JPEG.
-    // Once migrated, remove loader/loaderFile to use Vercel's edge-cached optimizer.
-    loader: 'custom',
-    loaderFile: './src/lib/imageLoader.ts',
+    // All HEIC images migrated to JPEG. Using Vercel's built-in edge-cached optimizer.
   },
   async headers() {
     return [
