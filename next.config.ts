@@ -12,8 +12,8 @@ const nextConfig: NextConfig = {
         hostname: 'images.unsplash.com',
       },
     ],
-    loader: 'custom',
-    loaderFile: './src/lib/imageLoader.ts',
+    // Vercel's built-in image optimization: edge-cached, global CDN, no cold starts.
+    // HEIC images are converted at upload time so the proxy is no longer needed.
   },
   async headers() {
     return [

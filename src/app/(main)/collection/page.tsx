@@ -110,7 +110,7 @@ export default function CollectionPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {pairs.map((pair) => {
+          {pairs.map((pair, index) => {
             const status = STATUS_CONFIG[pair.status] || STATUS_CONFIG.active;
             const imageUrl = pair.image_urls?.[0];
 
@@ -127,6 +127,7 @@ export default function CollectionPage() {
                           fill
                           className="object-cover"
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          priority={index < 4}
                         />
                       </div>
                     ) : (

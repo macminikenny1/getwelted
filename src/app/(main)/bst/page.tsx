@@ -34,9 +34,11 @@ interface ListingWithJoins extends BSTListing {
 function BSTCard({
   listing,
   reputation,
+  priority = false,
 }: {
   listing: ListingWithJoins;
   reputation?: { total: number; score: number };
+  priority?: boolean;
 }) {
   const router = useRouter();
   const imageUrl =
@@ -57,6 +59,7 @@ function BSTCard({
             fill
             className="object-cover"
             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+            priority={priority}
           />
         ) : (
           <div className="flex items-center justify-center h-full">
@@ -245,11 +248,12 @@ export default function BstPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
-          {filtered.map((listing) => (
+          {filtered.map((listing, index) => (
             <BSTCard
               key={listing.id}
               listing={listing}
               reputation={reputations[listing.user_id]}
+              priority={index < 4}
             />
           ))}
         </div>

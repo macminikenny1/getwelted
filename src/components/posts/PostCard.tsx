@@ -13,9 +13,11 @@ interface PostCardProps {
   post: Post;
   onLike: () => void;
   currentUserId?: string | null;
+  /** Mark as high-priority for above-the-fold loading (skips lazy load) */
+  priority?: boolean;
 }
 
-export default function PostCard({ post, onLike, currentUserId }: PostCardProps) {
+export default function PostCard({ post, onLike, currentUserId, priority = false }: PostCardProps) {
   const [liked, setLiked] = useState(post.liked_by_user ?? false);
   const [likeCount, setLikeCount] = useState(post.like_count ?? 0);
   const [saved, setSaved] = useState(false);
@@ -78,6 +80,7 @@ export default function PostCard({ post, onLike, currentUserId }: PostCardProps)
               fill
               className="object-cover"
               sizes="(max-width: 672px) 100vw, 672px"
+              priority={priority}
               unoptimized={!post.image_url.includes('supabase.co') && !post.image_url.includes('unsplash.com')}
             />
           ) : (

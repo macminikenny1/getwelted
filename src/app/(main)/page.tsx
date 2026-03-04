@@ -211,8 +211,8 @@ export default function FeedPage() {
           </div>
         ) : (
           <div className="divide-y divide-welted-border">
-            {posts.map(post => (
-              <PostCard key={post.id} post={post} onLike={() => handleLike(post.id)} currentUserId={currentUserId} />
+            {posts.map((post, index) => (
+              <PostCard key={post.id} post={post} onLike={() => handleLike(post.id)} currentUserId={currentUserId} priority={index < 2} />
             ))}
           </div>
         )}
