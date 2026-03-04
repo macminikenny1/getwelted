@@ -25,6 +25,41 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  // Handle auth code exchange — Supabase may redirect here with a `code` param
+  // on any URL (not just /auth/callback) depending on the redirect_to config
+  const code = request.nextUrl.searchParams.get('code');
+  const next = request.nextUrl.searchParams.get('next');
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      // Redirect to the intended page (or /reset-password for recovery, / for verification)
+      const redirectPath = next || '/';
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = redirectPath;
+      redirectUrl.searchParams.delete('code');
+      redirectUrl.searchParams.delete('next');
+      const redirect = NextResponse.redirect(redirectUrl);
+      // Copy auth cookies to the redirect response
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        redirect.cookies.set(cookie.name, cookie.value, {
+          path: '/',
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+        });
+      });
+      return redirect;
+    } else {
+      // Code exchange failed — redirect to login with error
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = '/login';
+      loginUrl.searchParams.delete('code');
+      loginUrl.searchParams.delete('next');
+      loginUrl.searchParams.set('error', 'auth_callback_failed');
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   // Refresh session — important for Server Components
   const { data: { user } } = await supabase.auth.getUser();
 
