@@ -117,7 +117,8 @@ export default function WishListPage() {
         const { error } = await supabase
           .from('wish_items')
           .update(payload)
-          .eq('id', editingItem.id);
+          .eq('id', editingItem.id)
+          .eq('user_id', user.id);
         if (error) throw error;
         showToast('Wish item updated!');
       } else {
@@ -141,7 +142,7 @@ export default function WishListPage() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     const supabase = createClient();
-    const { error } = await supabase.from('wish_items').delete().eq('id', deleteTarget);
+    const { error } = await supabase.from('wish_items').delete().eq('id', deleteTarget).eq('user_id', user?.id);
 
     if (error) {
       showToast('Failed to delete item.', 'error');
@@ -233,7 +234,7 @@ export default function WishListPage() {
                   {item.notes && (
                     <p className="text-xs text-welted-text-muted mt-2 line-clamp-2">{item.notes}</p>
                   )}
-                  {item.url && (
+                  {item.url && (item.url.startsWith('https://') || item.url.startsWith('http://')) && (
                     <a
                       href={item.url}
                       target="_blank"

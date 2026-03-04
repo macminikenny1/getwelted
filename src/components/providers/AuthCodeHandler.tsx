@@ -17,14 +17,15 @@ export default function AuthCodeHandler() {
     const code = searchParams.get('code');
     if (!code) return;
 
-    const next = searchParams.get('next') || '/';
+    // Validate redirect target to prevent open redirect attacks
+    const rawNext = searchParams.get('next') || '/';
+    const next = (rawNext.startsWith('/') && !rawNext.startsWith('//')) ? rawNext : '/';
 
     const exchangeCode = async () => {
       const supabase = createClient();
       const { error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (error) {
-        console.error('Auth code exchange failed:', error.message);
         router.replace('/login?error=auth_callback_failed');
       } else {
         router.replace(next);

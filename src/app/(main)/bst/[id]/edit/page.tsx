@@ -143,7 +143,8 @@ export default function EditListingPage() {
           description: description.trim() || null,
           image_urls: allImageUrls,
         })
-        .eq('id', listing.id);
+        .eq('id', listing.id)
+        .eq('user_id', user.id);
 
       if (error) {
         showToast('Failed to update listing', 'error');

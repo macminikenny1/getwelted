@@ -9,17 +9,14 @@ export default function GlobalError({
 }) {
   return (
     <html>
-      <body style={{ padding: 40, color: '#F5F0EA', background: '#0F0D0B', fontFamily: 'monospace' }}>
-        <h2 style={{ color: '#C84A4A' }}>Global Error</h2>
-        <pre style={{ whiteSpace: 'pre-wrap', color: '#C8864A', margin: '20px 0' }}>
-          {error.message}
-        </pre>
-        <pre style={{ whiteSpace: 'pre-wrap', color: '#8A7E72', fontSize: 12 }}>
-          {error.stack}
-        </pre>
+      <body style={{ padding: 40, color: '#F5F0EA', background: '#0F0D0B', fontFamily: 'sans-serif', textAlign: 'center' }}>
+        <h2 style={{ color: '#C84A4A', fontSize: 20, marginBottom: 12 }}>Something went wrong</h2>
+        <p style={{ color: '#8A7E72', fontSize: 14, marginBottom: 24 }}>
+          An unexpected error occurred. Please try again.
+        </p>
         <button
           onClick={reset}
-          style={{ marginTop: 20, padding: '8px 16px', background: '#C8864A', color: '#0F0D0B', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+          style={{ padding: '10px 24px', background: '#C8864A', color: '#0F0D0B', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}
         >
           Try Again
         </button>

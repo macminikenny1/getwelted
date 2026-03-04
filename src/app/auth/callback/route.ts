@@ -12,7 +12,9 @@ import { createServerClient } from '@supabase/ssr';
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get('code');
-  const next = searchParams.get('next') || '/';
+  // Validate redirect target to prevent open redirect attacks
+  const rawNext = searchParams.get('next') || '/';
+  const next = (rawNext.startsWith('/') && !rawNext.startsWith('//')) ? rawNext : '/';
 
   if (code) {
     const supabaseResponse = NextResponse.next({ request });

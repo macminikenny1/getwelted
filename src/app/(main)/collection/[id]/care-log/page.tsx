@@ -94,7 +94,7 @@ export default function CareLogPage() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     const supabase = createClient();
-    const { error } = await supabase.from('care_log').delete().eq('id', deleteTarget);
+    const { error } = await supabase.from('care_log').delete().eq('id', deleteTarget).eq('user_id', user?.id);
 
     if (error) {
       showToast('Failed to delete entry.', 'error');

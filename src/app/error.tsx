@@ -8,17 +8,21 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <div style={{ padding: 40, color: '#F5F0EA', background: '#0F0D0B', fontFamily: 'monospace' }}>
-      <h2 style={{ color: '#C84A4A' }}>Client Error Caught</h2>
-      <pre style={{ whiteSpace: 'pre-wrap', color: '#C8864A', margin: '20px 0' }}>
-        {error.message}
-      </pre>
-      <pre style={{ whiteSpace: 'pre-wrap', color: '#8A7E72', fontSize: 12 }}>
-        {error.stack}
-      </pre>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
+      <h2 className="text-welted-danger text-xl font-bold mb-3">Something went wrong</h2>
+      <p className="text-welted-text-muted text-sm max-w-md mb-6">
+        An unexpected error occurred. Please try again.
+      </p>
+      {process.env.NODE_ENV === 'development' && (
+        <pre className="text-left text-xs text-welted-text-muted bg-welted-card rounded-lg p-4 max-w-lg overflow-auto mb-6">
+          {error.message}
+          {'\n\n'}
+          {error.stack}
+        </pre>
+      )}
       <button
         onClick={reset}
-        style={{ marginTop: 20, padding: '8px 16px', background: '#C8864A', color: '#0F0D0B', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+        className="px-6 py-2.5 bg-welted-accent text-welted-bg font-bold rounded-lg hover:bg-welted-accent-dim transition-colors"
       >
         Try Again
       </button>

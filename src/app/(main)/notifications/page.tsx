@@ -92,7 +92,8 @@ export default function NotificationsPage() {
       await supabase
         .from('notifications')
         .update({ read: true })
-        .eq('id', notification.id);
+        .eq('id', notification.id)
+        .eq('user_id', user.id);
       setNotifications(prev =>
         prev.map(n => (n.id === notification.id ? { ...n, read: true } : n))
       );

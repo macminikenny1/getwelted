@@ -90,11 +90,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing url parameter' }, { status: 400 });
   }
 
-  // Only allow proxying from trusted domains
+  // Only allow proxying from trusted domains (exact match or subdomain)
   const allowed = ['supabase.co', 'unsplash.com'];
   try {
     const parsed = new URL(url);
-    if (!allowed.some((d) => parsed.hostname.endsWith(d))) {
+    if (parsed.protocol !== 'https:') {
+      return NextResponse.json({ error: 'Only HTTPS URLs allowed' }, { status: 403 });
+    }
+    const isAllowed = allowed.some((d) => parsed.hostname === d || parsed.hostname.endsWith('.' + d));
+    if (!isAllowed) {
       return NextResponse.json({ error: 'Domain not allowed' }, { status: 403 });
     }
   } catch {
@@ -116,6 +120,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const MAX_IMAGE_SIZE = 15 * 1024 * 1024; // 15 MB
+
     const response = await fetch(url);
     if (!response.ok) {
       return NextResponse.json(
@@ -124,7 +130,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let buffer = Buffer.from(await response.arrayBuffer());
+    // Check Content-Length before downloading
+    const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
+    if (contentLength > MAX_IMAGE_SIZE) {
+      return NextResponse.json({ error: 'Image too large' }, { status: 413 });
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    if (arrayBuffer.byteLength > MAX_IMAGE_SIZE) {
+      return NextResponse.json({ error: 'Image too large' }, { status: 413 });
+    }
+
+    let buffer = Buffer.from(arrayBuffer);
 
     // Check if the image is actually HEIC (iPhones upload HEIC with .jpg extension)
     if (isHeic(buffer)) {

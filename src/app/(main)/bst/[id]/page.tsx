@@ -78,7 +78,8 @@ export default function ListingDetailPage() {
     const { error } = await supabase
       .from('bst_listings')
       .update({ status: 'sold' })
-      .eq('id', listing.id);
+      .eq('id', listing.id)
+      .eq('user_id', user?.id);
 
     if (error) {
       showToast('Failed to mark as sold', 'error');
@@ -96,7 +97,8 @@ export default function ListingDetailPage() {
     const { error } = await supabase
       .from('bst_listings')
       .delete()
-      .eq('id', listing.id);
+      .eq('id', listing.id)
+      .eq('user_id', user?.id);
 
     if (error) {
       showToast('Failed to delete listing', 'error');

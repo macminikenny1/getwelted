@@ -89,7 +89,7 @@ export default function PairDetailPage() {
     setPair({ ...pair, wear_count: newCount });
 
     const supabase = createClient();
-    await supabase.from('pairs').update({ wear_count: newCount }).eq('id', pair.id);
+    await supabase.from('pairs').update({ wear_count: newCount }).eq('id', pair.id).eq('user_id', user?.id);
   };
 
   const handleSaveEdit = async () => {
@@ -108,7 +108,8 @@ export default function PairDetailPage() {
         status: editStatus,
         notes: editNotes.trim() || null,
       })
-      .eq('id', pair.id);
+      .eq('id', pair.id)
+      .eq('user_id', user?.id);
 
     if (error) {
       showToast('Failed to save changes.', 'error');
@@ -122,7 +123,7 @@ export default function PairDetailPage() {
   const handleDelete = async () => {
     if (!pair) return;
     const supabase = createClient();
-    const { error } = await supabase.from('pairs').delete().eq('id', pair.id);
+    const { error } = await supabase.from('pairs').delete().eq('id', pair.id).eq('user_id', user?.id);
     if (error) {
       showToast('Failed to delete pair.', 'error');
     } else {

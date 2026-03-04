@@ -97,7 +97,7 @@ export default function ResoleLogPage() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     const supabase = createClient();
-    const { error } = await supabase.from('resole_log').delete().eq('id', deleteTarget);
+    const { error } = await supabase.from('resole_log').delete().eq('id', deleteTarget).eq('user_id', user?.id);
 
     if (error) {
       showToast('Failed to delete entry.', 'error');
