@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import { ToastProvider } from "@/components/ui/Toast";
+import AuthCodeHandler from "@/components/providers/AuthCodeHandler";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -19,6 +21,9 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.variable} font-sans antialiased bg-welted-bg text-welted-text`}>
         <ToastProvider>
+          <Suspense>
+            <AuthCodeHandler />
+          </Suspense>
           {children}
         </ToastProvider>
       </body>
