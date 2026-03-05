@@ -53,7 +53,7 @@ function FeedbackForm() {
       // Load listing with seller profile
       const { data, error } = await supabase
         .from('bst_listings')
-        .select('*, profiles(id, username, avatar_url)')
+        .select('*, profiles!user_id(id, username, avatar_url)')
         .eq('id', id)
         .single();
 

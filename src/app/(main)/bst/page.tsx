@@ -144,7 +144,7 @@ export default function BstPage() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from('bst_listings')
-        .select('*, profiles(id, username, avatar_url), pairs(image_urls)')
+        .select('*, profiles!user_id(id, username, avatar_url), pairs(image_urls)')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 

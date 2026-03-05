@@ -69,7 +69,7 @@ export default function ListingDetailPage() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from('bst_listings')
-        .select('*, profiles(id, username, avatar_url), pairs(image_urls)')
+        .select('*, profiles!user_id(id, username, avatar_url), pairs(image_urls)')
         .eq('id', id)
         .single();
 
