@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   ArrowLeft, Edit3, Trash2, Plus, Minus, Save, X,
-  Droplets, ScrollText, Wrench, Package, ChevronLeft, ChevronRight,
+  Droplets, ScrollText, Wrench, Package, ChevronLeft, ChevronRight, Star,
 } from 'lucide-react';
 import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
@@ -143,6 +143,28 @@ export default function PairDetailPage() {
     setCurrentImageIndex((prev) => (prev - 1 + pair.image_urls.length) % pair.image_urls.length);
   };
 
+  const handleSetCover = async (index: number) => {
+    if (!pair || index === 0) return;
+    const url = pair.image_urls[index];
+    const reordered = [url, ...pair.image_urls.filter((_, i) => i !== index)];
+    setPair({ ...pair, image_urls: reordered });
+    setCurrentImageIndex(0);
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('pairs')
+      .update({ image_urls: reordered })
+      .eq('id', pair.id)
+      .eq('user_id', user?.id);
+
+    if (error) {
+      showToast('Failed to set cover photo.', 'error');
+      fetchData(); // Revert on failure
+    } else {
+      showToast('Cover photo updated!');
+    }
+  };
+
   if (loading || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -229,16 +251,31 @@ export default function PairDetailPage() {
             <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
               {pair.image_urls.map((url, i) => (
                 <button
-                  key={i}
+                  key={url}
                   onClick={() => setCurrentImageIndex(i)}
                   className={`relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-colors ${
                     i === currentImageIndex ? 'border-welted-accent' : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                 >
                   <Image src={imageSrc(url)} alt={`Thumb ${i + 1}`} fill className="object-cover" sizes="64px" />
+                  {i === 0 && (
+                    <div className="absolute bottom-0 inset-x-0 bg-black/60 flex items-center justify-center py-0.5">
+                      <Star size={10} className="text-welted-accent fill-welted-accent" />
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
+          )}
+          {/* Set as Cover button */}
+          {pair.image_urls.length > 1 && currentImageIndex !== 0 && (
+            <button
+              onClick={() => handleSetCover(currentImageIndex)}
+              className="flex items-center gap-1.5 mt-2 text-xs text-welted-accent hover:text-welted-text transition-colors"
+            >
+              <Star size={12} />
+              Set as cover photo
+            </button>
           )}
         </div>
       ) : (
