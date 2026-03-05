@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Spinner from '@/components/ui/Spinner';
 import { Suspense } from 'react';
@@ -14,7 +14,6 @@ import { Suspense } from 'react';
  * - OAuth provider redirects (Google, Apple, etc.)
  */
 function CallbackHandler() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
 
@@ -30,15 +29,17 @@ function CallbackHandler() {
           console.error('Auth callback exchange failed:', error.message);
           setError(error.message);
         } else {
-          router.replace(next);
-          router.refresh();
+          // Hard navigation so the browser sends fresh auth cookies to the server.
+          // router.replace() does a soft navigation where middleware may not
+          // see the newly set session cookies yet.
+          window.location.href = next;
         }
       });
     } else {
       // No code — redirect to login
-      router.replace('/login');
+      window.location.href = '/login';
     }
-  }, [searchParams, router]);
+  }, [searchParams]);
 
   if (error) {
     return (
