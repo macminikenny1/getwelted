@@ -36,7 +36,7 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   // Redirect unauthenticated users to login (except public routes)
-  const publicRoutes = ['/login', '/signup', '/forgot-password', '/reset-password', '/brands', '/bst'];
+  const publicRoutes = ['/login', '/signup', '/forgot-password', '/reset-password', '/verify-email', '/brands', '/bst'];
   const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route));
   const isPublicProfile = request.nextUrl.pathname.startsWith('/user/');
   const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/callback');
@@ -45,6 +45,14 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isPublicRoute && !isPublicProfile && !isAuthCallback && !isPublicBSTDetail) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
+    return NextResponse.redirect(url);
+  }
+
+  // Safety net: redirect authenticated-but-unverified users to verification page
+  const isVerifyEmail = request.nextUrl.pathname === '/verify-email';
+  if (user && !user.email_confirmed_at && !isPublicRoute && !isAuthCallback && !isVerifyEmail) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/verify-email';
     return NextResponse.redirect(url);
   }
 
