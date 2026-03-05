@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { imageSrc } from '@/lib/imageSrc';
 import { Heart, MessageCircle, Bookmark, Star } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Avatar from '@/components/ui/Avatar';
@@ -75,7 +76,7 @@ export default function PostCard({ post, onLike, currentUserId, priority = false
         <div className="relative w-full aspect-square bg-welted-bg overflow-hidden">
           {post.image_url ? (
             <Image
-              src={post.image_url}
+              src={imageSrc(post.image_url)}
               alt={post.caption || 'Boot post'}
               fill
               className="object-cover"

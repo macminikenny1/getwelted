@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import Avatar from '@/components/ui/Avatar';
 import Spinner from '@/components/ui/Spinner';
@@ -83,7 +84,7 @@ export default function PostDetailPage() {
     <div className="flex flex-col min-h-[calc(100vh-64px)]">
       {/* Post image */}
       <div className="relative w-full aspect-square bg-welted-bg">
-        <Image src={post.image_url} alt={post.caption || 'Post'} fill className="object-cover" sizes="(max-width: 768px) 100vw, 672px" />
+        <Image src={imageSrc(post.image_url)} alt={post.caption || 'Post'} fill className="object-cover" sizes="(max-width: 768px) 100vw, 672px" />
       </div>
 
       {/* Post meta */}

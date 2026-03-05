@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { imageSrc } from '@/lib/imageSrc';
 
 interface AvatarProps {
   url?: string | null;
@@ -22,7 +23,7 @@ export default function Avatar({ url, name, size = 'md', className = '' }: Avata
   if (url) {
     return (
       <Image
-        src={url}
+        src={imageSrc(url)}
         alt={name}
         width={pxMap[size]}
         height={pxMap[size]}

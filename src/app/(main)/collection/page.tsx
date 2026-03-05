@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Plus, RefreshCw, Heart, Archive, Clock, ShoppingBag, Package } from 'lucide-react';
+import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import Card from '@/components/ui/Card';
@@ -122,7 +123,7 @@ export default function CollectionPage() {
                     {imageUrl ? (
                       <div className="relative aspect-[4/3]">
                         <Image
-                          src={imageUrl}
+                          src={imageSrc(imageUrl)}
                           alt={`${pair.brand} ${pair.model}`}
                           fill
                           className="object-cover"

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Bookmark, ArrowLeft } from 'lucide-react';
+import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import Spinner from '@/components/ui/Spinner';
@@ -75,7 +76,7 @@ export default function BookmarksPage() {
           {bookmarks.map(bm => (
             <Link key={bm.id} href={`/post/${bm.posts.id}`} className="relative aspect-square group">
               <Image
-                src={bm.posts.image_url}
+                src={imageSrc(bm.posts.image_url)}
                 alt={bm.posts.caption || 'Saved post'}
                 fill
                 className="object-cover group-hover:opacity-80 transition-opacity"

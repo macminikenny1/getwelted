@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 
+import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { formatTimeAgo } from '@/lib/formatTime';
@@ -243,7 +244,7 @@ export default function ConversationPage() {
           {listingImage ? (
             <div className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-welted-input-bg">
               <Image
-                src={listingImage}
+                src={imageSrc(listingImage)}
                 alt={listingLabel || 'Listing'}
                 fill
                 className="object-cover"

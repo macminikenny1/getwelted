@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { uploadImage } from '@/lib/uploadImage';
 import Chip from '@/components/ui/Chip';
@@ -139,7 +140,7 @@ export default function CreatePostPage() {
                   }`}
                 >
                   {pair.image_urls?.[0] && (
-                    <Image src={pair.image_urls[0]} alt={pair.model} width={44} height={44} className="rounded-md object-cover" />
+                    <Image src={imageSrc(pair.image_urls[0])} alt={pair.model} width={44} height={44} className="rounded-md object-cover" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className={`text-xs font-bold uppercase tracking-wider ${selectedPair?.id === pair.id ? 'text-welted-accent' : 'text-welted-text-muted'}`}>{pair.brand}</p>

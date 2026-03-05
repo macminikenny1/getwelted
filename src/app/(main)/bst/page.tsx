@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 
+import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchReputationBatch } from '@/lib/reputation';
@@ -54,7 +55,7 @@ function BSTCard({
       <div className="relative aspect-[4/3] bg-welted-input-bg">
         {imageUrl ? (
           <Image
-            src={imageUrl}
+            src={imageSrc(imageUrl)}
             alt={`${listing.brand} ${listing.model}`}
             fill
             className="object-cover"

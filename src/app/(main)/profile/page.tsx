@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Camera, Settings, LogOut, Bookmark, Heart, Shield, Grid3X3 } from 'lucide-react';
+import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { Profile, Post } from '@/types';
@@ -206,7 +207,7 @@ export default function ProfilePage() {
             {posts.map(post => (
               <Link key={post.id} href={`/post/${post.id}`} className="relative aspect-square">
                 <Image
-                  src={post.image_url}
+                  src={imageSrc(post.image_url)}
                   alt="Post"
                   fill
                   className="object-cover hover:opacity-80 transition-opacity"

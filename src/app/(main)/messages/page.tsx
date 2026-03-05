@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Image from 'next/image';
+import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { formatTimeAgo } from '@/lib/formatTime';
@@ -103,7 +104,7 @@ export default function MessagesPage() {
                 {listingImage ? (
                   <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-welted-input-bg">
                     <Image
-                      src={listingImage}
+                      src={imageSrc(listingImage)}
                       alt={listingLabel || 'Listing'}
                       fill
                       className="object-cover"

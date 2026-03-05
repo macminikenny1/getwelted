@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 
 import Image from 'next/image';
+import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { uploadImages } from '@/lib/uploadImage';
@@ -200,7 +201,7 @@ export default function EditListingPage() {
             <div className="flex gap-3 overflow-x-auto pb-2">
               {existingImages.map((url, i) => (
                 <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden shrink-0">
-                  <Image src={url} alt={`Photo ${i + 1}`} fill className="object-cover" sizes="96px" />
+                  <Image src={imageSrc(url)} alt={`Photo ${i + 1}`} fill className="object-cover" sizes="96px" />
                   <button
                     type="button"
                     onClick={() => handleRemoveExistingImage(i)}

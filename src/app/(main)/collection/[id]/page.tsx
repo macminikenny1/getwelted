@@ -8,6 +8,7 @@ import {
   ArrowLeft, Edit3, Trash2, Plus, Minus, Save, X,
   Droplets, ScrollText, Wrench, Package, ChevronLeft, ChevronRight,
 } from 'lucide-react';
+import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/Toast';
@@ -200,7 +201,7 @@ export default function PairDetailPage() {
         <div className="mb-5">
           <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-welted-input-bg">
             <Image
-              src={pair.image_urls[currentImageIndex]}
+              src={imageSrc(pair.image_urls[currentImageIndex])}
               alt={`${pair.brand} ${pair.model}`}
               fill
               className="object-cover"
@@ -234,7 +235,7 @@ export default function PairDetailPage() {
                     i === currentImageIndex ? 'border-welted-accent' : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                 >
-                  <Image src={url} alt={`Thumb ${i + 1}`} fill className="object-cover" sizes="64px" />
+                  <Image src={imageSrc(url)} alt={`Thumb ${i + 1}`} fill className="object-cover" sizes="64px" />
                 </button>
               ))}
             </div>
@@ -420,7 +421,7 @@ export default function PairDetailPage() {
             {posts.map((post) => (
               <Link key={post.id} href={`/post/${post.id}`} className="shrink-0">
                 <div className="relative w-28 h-28 rounded-lg overflow-hidden border border-welted-border">
-                  <Image src={post.image_url} alt="Post" fill className="object-cover" />
+                  <Image src={imageSrc(post.image_url)} alt="Post" fill className="object-cover" />
                 </div>
                 <p className="text-[10px] text-welted-text-muted mt-1 text-center">
                   {new Date(post.created_at).toLocaleDateString()}

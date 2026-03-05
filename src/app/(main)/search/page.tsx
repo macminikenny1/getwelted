@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, Users, ImageIcon, Tag, X } from 'lucide-react';
+import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types';
 import Avatar from '@/components/ui/Avatar';
@@ -200,7 +201,7 @@ export default function SearchPage() {
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-welted-card transition-colors"
                   >
                     <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
-                      <Image src={p.image_url} alt="Post" fill className="object-cover" sizes="48px" />
+                      <Image src={imageSrc(p.image_url)} alt="Post" fill className="object-cover" sizes="48px" />
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm text-welted-text truncate">
@@ -232,7 +233,7 @@ export default function SearchPage() {
                   >
                     {l.image_urls?.[0] ? (
                       <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
-                        <Image src={l.image_urls[0]} alt="Listing" fill className="object-cover" sizes="48px" />
+                        <Image src={imageSrc(l.image_urls[0])} alt="Listing" fill className="object-cover" sizes="48px" />
                       </div>
                     ) : (
                       <div className="w-12 h-12 rounded-lg bg-welted-card border border-welted-border flex items-center justify-center shrink-0">

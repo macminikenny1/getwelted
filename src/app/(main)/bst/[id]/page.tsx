@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 
+import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchReputation, type ReputationData } from '@/lib/reputation';
@@ -195,7 +196,7 @@ export default function ListingDetailPage() {
           {/* Main Image */}
           <div className="relative aspect-square bg-welted-input-bg">
             <Image
-              src={allImages[activeImage]}
+              src={imageSrc(allImages[activeImage])}
               alt={`${listing.brand} ${listing.model}`}
               fill
               className="object-cover"
@@ -238,7 +239,7 @@ export default function ListingDetailPage() {
                       : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                 >
-                  <Image src={url} alt={`Thumbnail ${i + 1}`} fill className="object-cover" sizes="64px" />
+                  <Image src={imageSrc(url)} alt={`Thumbnail ${i + 1}`} fill className="object-cover" sizes="64px" />
                 </button>
               ))}
             </div>

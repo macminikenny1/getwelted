@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, UserPlus, UserCheck, Grid3X3, Package, Star, ThumbsUp, ThumbsDown, Minus } from 'lucide-react';
+import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { Profile, Post, Pair } from '@/types';
@@ -252,7 +253,7 @@ export default function PublicProfilePage() {
               {posts.map(post => (
                 <Link key={post.id} href={`/post/${post.id}`} className="relative aspect-square">
                   <Image
-                    src={post.image_url}
+                    src={imageSrc(post.image_url)}
                     alt="Post"
                     fill
                     className="object-cover hover:opacity-80 transition-opacity"
@@ -275,7 +276,7 @@ export default function PublicProfilePage() {
                 <div key={pair.id} className="bg-welted-card border border-welted-border rounded-xl overflow-hidden">
                   {pair.image_urls?.[0] && (
                     <div className="relative aspect-square">
-                      <Image src={pair.image_urls[0]} alt={pair.model} fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" />
+                      <Image src={imageSrc(pair.image_urls[0])} alt={pair.model} fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" />
                     </div>
                   )}
                   <div className="p-3">
