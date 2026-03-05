@@ -6,28 +6,47 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { imageSrc } from '@/lib/imageSrc';
+import { MoreHorizontal, Trash2, Flag } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/components/ui/Toast';
 import Avatar from '@/components/ui/Avatar';
 import Spinner from '@/components/ui/Spinner';
+import Dialog from '@/components/ui/Dialog';
 import { formatDate } from '@/lib/formatTime';
 import type { Post, Comment } from '@/types';
+
+const REPORT_REASONS = ['Spam', 'Inappropriate', 'Counterfeit', 'Harassment', 'Other'];
 
 export default function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { showToast } = useToast();
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isModerator, setIsModerator] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const commentsEndRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const isOwn = currentUserId === post?.user_id;
+  const canDelete = isOwn || isModerator;
 
   useEffect(() => {
     const fetchAll = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUserId(user?.id ?? null);
+
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('is_moderator').eq('id', user.id).single();
+        setIsModerator(!!profile?.is_moderator);
+      }
 
       const [postRes, commentsRes] = await Promise.all([
         supabase.from('posts').select('*, profiles!posts_user_id_fkey(id, username, display_name, avatar_url)').eq('id', id).single(),
@@ -41,6 +60,18 @@ export default function PostDetailPage() {
 
     fetchAll();
   }, [id]);
+
+  // Close menu on click outside
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +106,30 @@ export default function PostDetailPage() {
     setSubmitting(false);
   };
 
+  const handleDelete = async () => {
+    const supabase = createClient();
+    const { error } = await supabase.from('posts').delete().eq('id', id);
+    if (error) {
+      showToast('Failed to delete post.', 'error');
+    } else {
+      showToast('Post deleted.');
+      router.push('/');
+    }
+  };
+
+  const handleReport = async (reason: string) => {
+    if (!currentUserId) return;
+    const supabase = createClient();
+    await supabase.from('reports').insert({
+      reporter_id: currentUserId,
+      target_type: 'post',
+      target_id: id,
+      reason,
+    });
+    showToast('Reported. Thanks for keeping the community safe.');
+    setReportOpen(false);
+  };
+
   if (loading) return <div className="flex items-center justify-center py-20"><Spinner size="lg" /></div>;
   if (!post) return <div className="text-center py-20 text-welted-text-muted">Post not found.</div>;
 
@@ -89,10 +144,45 @@ export default function PostDetailPage() {
 
       {/* Post meta */}
       <div className="p-4">
-        <Link href={`/user/${username}`} className="flex items-center gap-3 mb-3">
-          <Avatar url={(post as any).profiles?.avatar_url} name={username} size="md" />
-          <span className="text-sm font-bold text-welted-accent">@{username}</span>
-        </Link>
+        <div className="flex items-center justify-between mb-3">
+          <Link href={`/user/${username}`} className="flex items-center gap-3">
+            <Avatar url={(post as any).profiles?.avatar_url} name={username} size="md" />
+            <span className="text-sm font-bold text-welted-accent">@{username}</span>
+          </Link>
+          {/* More menu */}
+          {currentUserId && (canDelete || !isOwn) && (
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="p-1.5 rounded-full hover:bg-welted-card-hover transition-colors text-welted-text-muted hover:text-welted-text"
+              >
+                <MoreHorizontal size={20} />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-1 bg-welted-card border border-welted-border rounded-lg shadow-lg py-1 min-w-[160px] z-50">
+                  {canDelete && (
+                    <button
+                      onClick={() => { setMenuOpen(false); setDeleteOpen(true); }}
+                      className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-welted-danger hover:bg-welted-card-hover transition-colors text-left"
+                    >
+                      <Trash2 size={15} />
+                      Delete Post
+                    </button>
+                  )}
+                  {!isOwn && (
+                    <button
+                      onClick={() => { setMenuOpen(false); setReportOpen(true); }}
+                      className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-welted-text-muted hover:bg-welted-card-hover hover:text-welted-text transition-colors text-left"
+                    >
+                      <Flag size={15} />
+                      Report
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         {post.caption && <p className="text-welted-text text-[15px] leading-relaxed mb-2">{post.caption}</p>}
         <time className="text-xs text-welted-text-muted">{formatDate(post.created_at)}</time>
       </div>
@@ -142,6 +232,33 @@ export default function PostDetailPage() {
           </button>
         </form>
       </div>
+
+      {/* Delete Confirmation */}
+      <Dialog
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        title="Delete Post"
+        description="Are you sure you want to delete this post? This action cannot be undone."
+        actions={[
+          { label: 'Cancel', onClick: () => {}, variant: 'cancel' },
+          { label: 'Delete', onClick: handleDelete, variant: 'danger' },
+        ]}
+      />
+
+      {/* Report Reason Picker */}
+      <Dialog
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        title="Report Post"
+        description="Why are you reporting this post?"
+        actions={[
+          ...REPORT_REASONS.map(reason => ({
+            label: reason,
+            onClick: () => handleReport(reason),
+            variant: 'cancel' as const,
+          })),
+        ]}
+      />
     </div>
   );
 }

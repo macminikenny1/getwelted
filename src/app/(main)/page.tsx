@@ -117,11 +117,18 @@ export default function FeedPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isModerator, setIsModerator] = useState(false);
 
   const fetchPosts = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     setCurrentUserId(user?.id ?? null);
+
+    // Check moderator status
+    if (user) {
+      const { data: profile } = await supabase.from('profiles').select('is_moderator').eq('id', user.id).single();
+      setIsModerator(!!profile?.is_moderator);
+    }
 
     // Fetch blocked user ids
     let blockedIds: string[] = [];
@@ -212,7 +219,15 @@ export default function FeedPage() {
         ) : (
           <div className="divide-y divide-welted-border">
             {posts.map((post, index) => (
-              <PostCard key={post.id} post={post} onLike={() => handleLike(post.id)} currentUserId={currentUserId} priority={index < 2} />
+              <PostCard
+                key={post.id}
+                post={post}
+                onLike={() => handleLike(post.id)}
+                currentUserId={currentUserId}
+                isModerator={isModerator}
+                onDelete={() => setPosts(prev => prev.filter(p => p.id !== post.id))}
+                priority={index < 2}
+              />
             ))}
           </div>
         )}
