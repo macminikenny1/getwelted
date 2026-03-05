@@ -61,6 +61,13 @@ export default function ConversationPage() {
         return;
       }
 
+      // Security: verify current user is a participant in this conversation
+      if (convo.buyer_id !== user!.id && convo.seller_id !== user!.id) {
+        console.error('User is not a participant in this conversation');
+        setLoading(false);
+        return;
+      }
+
       setConversation(convo as ConversationDetail);
 
       // Load messages

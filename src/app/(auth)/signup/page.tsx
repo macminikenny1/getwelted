@@ -76,8 +76,8 @@ export default function SignUpPage() {
       setError('Username is already taken');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
       return;
     }
 
@@ -159,9 +159,9 @@ export default function SignUpPage() {
             value={password}
             onChange={e => setPassword(e.target.value)}
             className="w-full bg-welted-input-bg border border-welted-border rounded-lg px-4 py-3 text-welted-text placeholder:text-welted-text-muted/50 focus:border-welted-accent outline-none transition-colors"
-            placeholder="At least 6 characters"
+            placeholder="At least 8 characters"
             required
-            minLength={6}
+            minLength={8}
             autoComplete="new-password"
           />
         </div>

@@ -44,8 +44,8 @@ export function UserActionsProvider({ children }: { children: React.ReactNode })
       }
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) load(session.user.id);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) load(user.id);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {

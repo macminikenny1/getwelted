@@ -52,7 +52,9 @@ export default function SearchPage() {
     setSearching(true);
     setHasSearched(true);
     const supabase = createClient();
-    const pattern = `%${term.trim()}%`;
+    // Escape special ilike characters to prevent query manipulation
+    const escaped = term.trim().replace(/[%_\\]/g, '\\$&');
+    const pattern = `%${escaped}%`;
 
     const [usersRes, postsRes, listingsRes] = await Promise.all([
       supabase

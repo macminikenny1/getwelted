@@ -90,6 +90,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing url parameter' }, { status: 400 });
   }
 
+  // Verify request originates from our domain (prevent external abuse)
+  const referer = request.headers.get('referer') || '';
+  const origin = request.headers.get('origin') || '';
+  const validSources = ['getwelted.com', 'localhost', 'welted.vercel.app'];
+  const isValidSource = validSources.some(d => referer.includes(d) || origin.includes(d));
+  if (!isValidSource) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   // Only allow proxying from trusted domains (exact match or subdomain)
   const allowed = ['supabase.co', 'unsplash.com'];
   try {

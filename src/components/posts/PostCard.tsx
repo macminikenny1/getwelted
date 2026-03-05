@@ -82,7 +82,13 @@ export default function PostCard({ post, onLike, currentUserId, isModerator, onD
 
   const handleDelete = async () => {
     const supabase = createClient();
-    const { error } = await supabase.from('posts').delete().eq('id', post.id);
+    // Moderators can delete any post (RLS enforces is_moderator at DB level)
+    // Regular users can only delete their own posts
+    const query = supabase.from('posts').delete().eq('id', post.id);
+    if (!isModerator) {
+      query.eq('user_id', currentUserId!);
+    }
+    const { error } = await query;
     if (error) {
       showToast('Failed to delete post.', 'error');
     } else {
