@@ -41,7 +41,7 @@ function VerifyEmailContent() {
       type: 'signup',
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/`,
+        emailRedirectTo: `${window.location.origin}/auth/complete?next=/`,
       },
     });
 

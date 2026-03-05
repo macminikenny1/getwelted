@@ -39,7 +39,7 @@ export async function updateSession(request: NextRequest) {
   const publicRoutes = ['/login', '/signup', '/forgot-password', '/reset-password', '/verify-email', '/brands', '/bst'];
   const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route));
   const isPublicProfile = request.nextUrl.pathname.startsWith('/user/');
-  const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/callback');
+  const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/callback') || request.nextUrl.pathname.startsWith('/auth/complete');
   const isPublicBSTDetail = /^\/bst\/[^/]+$/.test(request.nextUrl.pathname) && !request.nextUrl.pathname.endsWith('/edit');
 
   if (!user && !isPublicRoute && !isPublicProfile && !isAuthCallback && !isPublicBSTDetail) {
