@@ -1,3 +1,11 @@
+export interface ShippingAddress {
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+}
+
 export interface Profile {
   id: string;
   username: string;
@@ -11,6 +19,7 @@ export interface Profile {
     cashapp?: string;
     paypal?: string;
   } | null;
+  shipping_address?: ShippingAddress | null;
   created_at: string;
 }
 
@@ -84,6 +93,8 @@ export interface BSTListing {
   status: 'active' | 'sold' | 'pending_trade';
   buyer_id?: string | null;
   receipt_confirmed_at?: string | null;
+  tracking_carrier?: string | null;
+  tracking_number?: string | null;
   created_at: string;
   profiles?: Profile;
 }
@@ -98,6 +109,10 @@ export interface TradeOffer {
   status: 'pending' | 'accepted' | 'declined' | 'completed' | 'rescinded';
   proposer_confirmed: boolean;
   owner_confirmed: boolean;
+  proposer_tracking_carrier?: string | null;
+  proposer_tracking_number?: string | null;
+  owner_tracking_carrier?: string | null;
+  owner_tracking_number?: string | null;
   offered_pair?: Pair;
   created_at?: string;
 }

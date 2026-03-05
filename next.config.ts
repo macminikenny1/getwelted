@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' maps.googleapis.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' *.supabase.co images.unsplash.com data: blob:",
               "connect-src 'self' *.supabase.co *.google.com *.googleapis.com",

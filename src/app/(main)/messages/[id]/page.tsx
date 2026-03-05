@@ -9,7 +9,7 @@ import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { formatTimeAgo } from '@/lib/formatTime';
-import type { Message, Conversation, Profile, BSTListing, Pair, TradeOffer } from '@/types';
+import type { Message, Conversation, Profile, BSTListing, Pair, TradeOffer, ShippingAddress } from '@/types';
 import Avatar from '@/components/ui/Avatar';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -18,12 +18,16 @@ import Spinner from '@/components/ui/Spinner';
 import Card from '@/components/ui/Card';
 import { useToast } from '@/components/ui/Toast';
 import TradeOfferCard from '@/components/bst/TradeOfferCard';
-import { ArrowLeft, Send, Package, ArrowLeftRight, DollarSign, CheckCircle2, Clock } from 'lucide-react';
+import { ArrowLeft, Send, Package, ArrowLeftRight, DollarSign, CheckCircle2, Clock, MapPin, Truck } from 'lucide-react';
+
+interface ConversationProfile extends Profile {
+  shipping_address?: ShippingAddress | null;
+}
 
 interface ConversationDetail extends Conversation {
-  bst_listings: Pick<BSTListing, 'id' | 'brand' | 'model' | 'image_urls' | 'status' | 'trade_interest' | 'pair_id' | 'buyer_id' | 'receipt_confirmed_at' | 'user_id'> | null;
-  buyer: Profile;
-  seller: Profile;
+  bst_listings: Pick<BSTListing, 'id' | 'brand' | 'model' | 'image_urls' | 'status' | 'trade_interest' | 'pair_id' | 'buyer_id' | 'receipt_confirmed_at' | 'user_id' | 'tracking_carrier' | 'tracking_number'> | null;
+  buyer: ConversationProfile;
+  seller: ConversationProfile;
 }
 
 export default function ConversationPage() {
@@ -53,6 +57,13 @@ export default function ConversationPage() {
 
   // Receipt confirmation
   const [confirmingReceipt, setConfirmingReceipt] = useState(false);
+
+  // Tracking
+  const [trackingCarrier, setTrackingCarrier] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [savingTracking, setSavingTracking] = useState(false);
+  const [savedTracking, setSavedTracking] = useState<{ carrier: string; number: string } | null>(null);
+  const [otherPartyTracking, setOtherPartyTracking] = useState<{ carrier: string; number: string } | null>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -87,7 +98,7 @@ export default function ConversationPage() {
       const { data: convo, error: convoError } = await supabase
         .from('conversations')
         .select(
-          '*, bst_listings(id, brand, model, image_urls, status, trade_interest, pair_id, buyer_id, receipt_confirmed_at, user_id), buyer:profiles!conversations_buyer_id_fkey(id, username, avatar_url, payment_info), seller:profiles!conversations_seller_id_fkey(id, username, avatar_url, payment_info)'
+          '*, bst_listings(id, brand, model, image_urls, status, trade_interest, pair_id, buyer_id, receipt_confirmed_at, user_id, tracking_carrier, tracking_number), buyer:profiles!conversations_buyer_id_fkey(id, username, avatar_url, payment_info, shipping_address), seller:profiles!conversations_seller_id_fkey(id, username, avatar_url, payment_info, shipping_address)'
         )
         .eq('id', conversationId)
         .single();
@@ -113,6 +124,39 @@ export default function ConversationPage() {
         const seller = (convo as any).seller;
         if (seller?.payment_info && user!.id === convo.buyer_id) {
           setSellerPaymentInfo(seller.payment_info);
+        }
+      }
+
+      // Load tracking data
+      const isSeller = convo.seller_id === user!.id;
+      if (listing?.status === 'sold' && !listing?.receipt_confirmed_at) {
+        // Sale tracking — on the listing
+        if (listing.tracking_carrier || listing.tracking_number) {
+          const t = { carrier: listing.tracking_carrier || '', number: listing.tracking_number || '' };
+          if (isSeller) setSavedTracking(t);
+          else setOtherPartyTracking(t);
+        }
+      }
+      if (listing?.status === 'pending_trade') {
+        // Trade tracking — on the accepted trade offer
+        const { data: acceptedOffer } = await supabase
+          .from('trade_offers')
+          .select('*')
+          .eq('conversation_id', conversationId)
+          .eq('status', 'accepted')
+          .maybeSingle();
+
+        if (acceptedOffer) {
+          const isProposer = acceptedOffer.proposer_id === user!.id;
+          const myT = isProposer
+            ? { carrier: acceptedOffer.proposer_tracking_carrier || '', number: acceptedOffer.proposer_tracking_number || '' }
+            : { carrier: acceptedOffer.owner_tracking_carrier || '', number: acceptedOffer.owner_tracking_number || '' };
+          const theirT = isProposer
+            ? { carrier: acceptedOffer.owner_tracking_carrier || '', number: acceptedOffer.owner_tracking_number || '' }
+            : { carrier: acceptedOffer.proposer_tracking_carrier || '', number: acceptedOffer.proposer_tracking_number || '' };
+
+          if (myT.carrier || myT.number) setSavedTracking(myT);
+          if (theirT.carrier || theirT.number) setOtherPartyTracking(theirT);
         }
       }
 
@@ -387,7 +431,7 @@ export default function ConversationPage() {
     // Refresh conversation to get updated listing status
     const { data: refreshedConvo } = await supabase
       .from('conversations')
-      .select('*, bst_listings(id, brand, model, image_urls, status, trade_interest, pair_id, buyer_id, receipt_confirmed_at, user_id), buyer:profiles!conversations_buyer_id_fkey(id, username, avatar_url, payment_info), seller:profiles!conversations_seller_id_fkey(id, username, avatar_url, payment_info)')
+      .select('*, bst_listings(id, brand, model, image_urls, status, trade_interest, pair_id, buyer_id, receipt_confirmed_at, user_id, tracking_carrier, tracking_number), buyer:profiles!conversations_buyer_id_fkey(id, username, avatar_url, payment_info, shipping_address), seller:profiles!conversations_seller_id_fkey(id, username, avatar_url, payment_info, shipping_address)')
       .eq('id', conversationId)
       .single();
     if (refreshedConvo) setConversation(refreshedConvo as ConversationDetail);
@@ -541,7 +585,7 @@ export default function ConversationPage() {
     // Refresh conversation
     const { data: refreshedConvo } = await supabase
       .from('conversations')
-      .select('*, bst_listings(id, brand, model, image_urls, status, trade_interest, pair_id, buyer_id, receipt_confirmed_at, user_id), buyer:profiles!conversations_buyer_id_fkey(id, username, avatar_url, payment_info), seller:profiles!conversations_seller_id_fkey(id, username, avatar_url, payment_info)')
+      .select('*, bst_listings(id, brand, model, image_urls, status, trade_interest, pair_id, buyer_id, receipt_confirmed_at, user_id, tracking_carrier, tracking_number), buyer:profiles!conversations_buyer_id_fkey(id, username, avatar_url, payment_info, shipping_address), seller:profiles!conversations_seller_id_fkey(id, username, avatar_url, payment_info, shipping_address)')
       .eq('id', conversationId)
       .single();
     if (refreshedConvo) setConversation(refreshedConvo as ConversationDetail);
@@ -607,10 +651,64 @@ export default function ConversationPage() {
     // Refresh conversation
     const { data: refreshedConvo } = await supabase
       .from('conversations')
-      .select('*, bst_listings(id, brand, model, image_urls, status, trade_interest, pair_id, buyer_id, receipt_confirmed_at, user_id), buyer:profiles!conversations_buyer_id_fkey(id, username, avatar_url, payment_info), seller:profiles!conversations_seller_id_fkey(id, username, avatar_url, payment_info)')
+      .select('*, bst_listings(id, brand, model, image_urls, status, trade_interest, pair_id, buyer_id, receipt_confirmed_at, user_id, tracking_carrier, tracking_number), buyer:profiles!conversations_buyer_id_fkey(id, username, avatar_url, payment_info, shipping_address), seller:profiles!conversations_seller_id_fkey(id, username, avatar_url, payment_info, shipping_address)')
       .eq('id', conversationId)
       .single();
     if (refreshedConvo) setConversation(refreshedConvo as ConversationDetail);
+    await fetchMessages();
+  };
+
+  // ─── Tracking ────────────────────────────────────
+
+  const handleSaveTracking = async () => {
+    if (!user || !trackingNumber.trim()) return;
+    setSavingTracking(true);
+    const supabase = createClient();
+    const listing = conversation?.bst_listings;
+
+    if (listing?.status === 'sold' && conversation?.seller_id === user.id) {
+      // Sale: seller saves tracking on listing
+      await supabase.from('bst_listings').update({
+        tracking_carrier: trackingCarrier.trim() || null,
+        tracking_number: trackingNumber.trim(),
+      }).eq('id', listing.id);
+    } else if (listing?.status === 'pending_trade') {
+      // Trade: save on accepted trade offer
+      const { data: offer } = await supabase
+        .from('trade_offers')
+        .select('id, proposer_id')
+        .eq('conversation_id', conversationId)
+        .eq('status', 'accepted')
+        .single();
+
+      if (offer) {
+        const isProposer = offer.proposer_id === user.id;
+        const fields = isProposer
+          ? { proposer_tracking_carrier: trackingCarrier.trim() || null, proposer_tracking_number: trackingNumber.trim() }
+          : { owner_tracking_carrier: trackingCarrier.trim() || null, owner_tracking_number: trackingNumber.trim() };
+        await supabase.from('trade_offers').update(fields).eq('id', offer.id);
+      }
+    }
+
+    setSavedTracking({ carrier: trackingCarrier.trim(), number: trackingNumber.trim() });
+
+    // Send a system message about tracking
+    const carrierLabel = trackingCarrier.trim() || 'Tracking';
+    await supabase.from('messages').insert({
+      conversation_id: conversationId,
+      sender_id: user.id,
+      body: `${carrierLabel}: ${trackingNumber.trim()}`,
+    });
+
+    await supabase.from('conversations').update({
+      last_message: `${carrierLabel}: ${trackingNumber.trim()}`,
+      last_message_at: new Date().toISOString(),
+    }).eq('id', conversationId);
+
+    showToast('Tracking saved!');
+    setSavingTracking(false);
+    setTrackingCarrier('');
+    setTrackingNumber('');
     await fetchMessages();
   };
 
@@ -651,6 +749,25 @@ export default function ConversationPage() {
     listing?.status === 'active' &&
     listing?.trade_interest &&
     isBuyerInConversation;
+
+  // Transaction completion detection
+  const hasCompletedTrade = messages.some(
+    (m) => m.trade_offer && m.trade_offer.proposer_confirmed && m.trade_offer.owner_confirmed
+  );
+  const isTransactionComplete =
+    (listing?.status === 'sold' && !!listing?.receipt_confirmed_at) || hasCompletedTrade;
+
+  // Shipping address of the other party
+  const otherUserAddress = isBuyerInConversation
+    ? conversation.seller?.shipping_address
+    : conversation.buyer?.shipping_address;
+
+  // Should show tracking input (seller for sales, either party for trades)
+  const canAddTracking =
+    !isTransactionComplete &&
+    !savedTracking &&
+    ((listing?.status === 'sold' && isSellerInConversation) ||
+     listing?.status === 'pending_trade');
 
   // Show receipt confirmation banner for buyer on sold listings (not trades)
   const showSaleReceiptBanner =
@@ -732,8 +849,8 @@ export default function ConversationPage() {
         </div>
       )}
 
-      {/* Payment Info Banner (shown to buyer after sale) */}
-      {sellerPaymentInfo && listing?.status === 'sold' && isBuyerInConversation && (
+      {/* Payment Info Banner (shown to buyer after sale, hidden when complete) */}
+      {sellerPaymentInfo && listing?.status === 'sold' && isBuyerInConversation && !isTransactionComplete && (
         <div className="shrink-0 px-4 py-3 bg-welted-success/5 border-b border-welted-success/20">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign size={16} className="text-welted-success" />
@@ -756,6 +873,88 @@ export default function ConversationPage() {
               </p>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Shipping Address Banner (shown during active transactions, hidden when complete) */}
+      {!isTransactionComplete && (listing?.status === 'sold' || listing?.status === 'pending_trade') && (
+        <div className="shrink-0 px-4 py-3 bg-welted-accent/5 border-b border-welted-accent/20">
+          <div className="flex items-center gap-2 mb-2">
+            <MapPin size={16} className="text-welted-accent" />
+            <span className="text-xs font-bold text-welted-accent uppercase tracking-wider">
+              Ship To
+            </span>
+          </div>
+          {otherUserAddress ? (
+            <div>
+              <p className="text-xs font-semibold text-welted-text mb-0.5">
+                {otherUser?.username}
+              </p>
+              <p className="text-sm text-welted-text leading-relaxed">
+                {otherUserAddress.street}<br />
+                {otherUserAddress.city}, {otherUserAddress.state} {otherUserAddress.zip}<br />
+                {otherUserAddress.country}
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-welted-text-muted">
+              {otherUser?.username} hasn&apos;t added a shipping address yet.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Tracking Section */}
+      {(listing?.status === 'sold' || listing?.status === 'pending_trade') && (
+        <div className="shrink-0 px-4 py-3 bg-welted-card border-b border-welted-border">
+          <div className="flex items-center gap-2 mb-2">
+            <Truck size={16} className="text-welted-accent" />
+            <span className="text-xs font-bold text-welted-accent uppercase tracking-wider">Tracking</span>
+          </div>
+
+          {/* Other party's tracking */}
+          {otherPartyTracking && (otherPartyTracking.carrier || otherPartyTracking.number) && (
+            <div className="mb-2">
+              <p className="text-xs text-welted-text-muted">{otherUser?.username}&apos;s shipment:</p>
+              <p className="text-sm font-semibold text-welted-text">
+                {otherPartyTracking.carrier ? `${otherPartyTracking.carrier}: ` : ''}{otherPartyTracking.number}
+              </p>
+            </div>
+          )}
+
+          {/* My tracking */}
+          {savedTracking ? (
+            <div>
+              <p className="text-xs text-welted-text-muted">Your shipment:</p>
+              <p className="text-sm font-semibold text-welted-text">
+                {savedTracking.carrier ? `${savedTracking.carrier}: ` : ''}{savedTracking.number}
+              </p>
+            </div>
+          ) : canAddTracking ? (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Carrier (USPS, UPS...)"
+                  value={trackingCarrier}
+                  onChange={(e) => setTrackingCarrier(e.target.value)}
+                  className="flex-1 bg-welted-input-bg border border-welted-border rounded-lg px-3 py-2 text-sm text-welted-text placeholder:text-welted-text-muted/50 focus:outline-none focus:ring-1 focus:ring-welted-accent"
+                />
+                <input
+                  type="text"
+                  placeholder="Tracking #"
+                  value={trackingNumber}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                  className="flex-1 bg-welted-input-bg border border-welted-border rounded-lg px-3 py-2 text-sm text-welted-text placeholder:text-welted-text-muted/50 focus:outline-none focus:ring-1 focus:ring-welted-accent"
+                />
+              </div>
+              <Button size="sm" onClick={handleSaveTracking} disabled={!trackingNumber.trim() || savingTracking}>
+                {savingTracking ? <Spinner size="sm" /> : 'Add Tracking'}
+              </Button>
+            </div>
+          ) : !otherPartyTracking && (
+            <p className="text-xs text-welted-text-muted">No tracking info yet.</p>
+          )}
         </div>
       )}
 
