@@ -89,7 +89,7 @@ function BSTCard({
         {/* Badges */}
         <div className="flex flex-wrap gap-1.5">
           {listing.size_us && (
-            <Badge variant="muted">Size {listing.size_us}{listing.width ? listing.width : ''}</Badge>
+            <Badge variant="muted">Size {listing.size_us}{listing.width ? ` ${listing.width}` : ''}</Badge>
           )}
           {listing.condition && (
             <Badge variant="muted">{listing.condition}/10</Badge>

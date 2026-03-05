@@ -152,7 +152,8 @@ export default function CollectionPage() {
                     {(pair.size_us || pair.colorway) && (
                       <p className="text-welted-text-muted text-xs mt-1 truncate">
                         {pair.size_us ? `US ${pair.size_us}` : ''}
-                        {pair.size_us && pair.colorway ? ' · ' : ''}
+                        {pair.size_us && pair.width ? ` ${pair.width}` : ''}
+                        {(pair.size_us || pair.width) && pair.colorway ? ' · ' : ''}
                         {pair.colorway || ''}
                       </p>
                     )}

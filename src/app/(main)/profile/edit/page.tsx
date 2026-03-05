@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Camera } from 'lucide-react';
+import { ArrowLeft, Camera, DollarSign } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { Profile } from '@/types';
@@ -28,6 +28,11 @@ export default function EditProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [usernameError, setUsernameError] = useState('');
 
+  // Payment info
+  const [venmo, setVenmo] = useState('');
+  const [cashapp, setCashapp] = useState('');
+  const [paypal, setPaypal] = useState('');
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
@@ -48,6 +53,13 @@ export default function EditProfilePage() {
           setDisplayName(data.display_name || '');
           setBio(data.bio || '');
           setAvatarUrl(data.avatar_url);
+          // Load payment info
+          const pi = (data as any).payment_info;
+          if (pi) {
+            setVenmo(pi.venmo || '');
+            setCashapp(pi.cashapp || '');
+            setPaypal(pi.paypal || '');
+          }
         }
         setLoading(false);
       });
@@ -109,6 +121,12 @@ export default function EditProfilePage() {
       }
     }
 
+    // Build payment_info object (only include non-empty values)
+    const paymentInfo: Record<string, string> = {};
+    if (venmo.trim()) paymentInfo.venmo = venmo.trim();
+    if (cashapp.trim()) paymentInfo.cashapp = cashapp.trim();
+    if (paypal.trim()) paymentInfo.paypal = paypal.trim();
+
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
@@ -116,6 +134,7 @@ export default function EditProfilePage() {
         display_name: displayName.trim() || null,
         bio: bio.trim() || null,
         avatar_url: avatarUrl,
+        payment_info: Object.keys(paymentInfo).length > 0 ? paymentInfo : null,
       })
       .eq('id', user.id);
 
@@ -137,7 +156,7 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6 max-w-lg mx-auto pb-24">
       {/* Header */}
       <div className="flex items-center gap-3">
         <button onClick={() => router.back()} className="text-welted-text-muted hover:text-welted-text transition-colors">
@@ -211,6 +230,53 @@ export default function EditProfilePage() {
             placeholder="Tell us about your boot journey..."
           />
           <p className="text-welted-text-muted text-xs mt-1 text-right">{bio.length}/300</p>
+        </div>
+      </div>
+
+      {/* Payment Info Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 pt-2">
+          <DollarSign size={18} className="text-welted-accent" />
+          <h2 className="text-base font-bold text-welted-text">Payment Info</h2>
+        </div>
+        <p className="text-xs text-welted-text-muted -mt-2">
+          Optional. Shown to buyers after you mark a listing as sold so they can pay you.
+        </p>
+
+        <div>
+          <label className="block text-sm font-medium text-welted-text mb-1.5">Venmo</label>
+          <input
+            type="text"
+            value={venmo}
+            onChange={(e) => setVenmo(e.target.value)}
+            className="w-full rounded-lg border border-welted-border bg-welted-input-bg px-4 py-2.5 text-sm text-welted-text placeholder:text-welted-text-muted/50 focus:outline-none focus:ring-1 focus:ring-welted-accent"
+            placeholder="@yourhandle"
+            autoCapitalize="none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-welted-text mb-1.5">Cash App</label>
+          <input
+            type="text"
+            value={cashapp}
+            onChange={(e) => setCashapp(e.target.value)}
+            className="w-full rounded-lg border border-welted-border bg-welted-input-bg px-4 py-2.5 text-sm text-welted-text placeholder:text-welted-text-muted/50 focus:outline-none focus:ring-1 focus:ring-welted-accent"
+            placeholder="$yourcashtag"
+            autoCapitalize="none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-welted-text mb-1.5">PayPal</label>
+          <input
+            type="text"
+            value={paypal}
+            onChange={(e) => setPaypal(e.target.value)}
+            className="w-full rounded-lg border border-welted-border bg-welted-input-bg px-4 py-2.5 text-sm text-welted-text placeholder:text-welted-text-muted/50 focus:outline-none focus:ring-1 focus:ring-welted-accent"
+            placeholder="email@example.com"
+            autoCapitalize="none"
+          />
         </div>
       </div>
 

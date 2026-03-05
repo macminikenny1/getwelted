@@ -6,6 +6,11 @@ export interface Profile {
   avatar_url: string | null;
   is_moderator?: boolean;
   pinned_post_id?: string | null;
+  payment_info?: {
+    venmo?: string;
+    cashapp?: string;
+    paypal?: string;
+  } | null;
   created_at: string;
 }
 
@@ -77,8 +82,24 @@ export interface BSTListing {
   description: string | null;
   image_urls: string[];
   status: 'active' | 'sold' | 'pending_trade';
+  buyer_id?: string | null;
+  receipt_confirmed_at?: string | null;
   created_at: string;
   profiles?: Profile;
+}
+
+export interface TradeOffer {
+  id: string;
+  conversation_id: string;
+  listing_id: string;
+  offered_pair_id: string;
+  proposer_id: string;
+  listing_owner_id: string;
+  status: 'pending' | 'accepted' | 'declined' | 'completed' | 'rescinded';
+  proposer_confirmed: boolean;
+  owner_confirmed: boolean;
+  offered_pair?: Pair;
+  created_at?: string;
 }
 
 export interface CareLogEntry {
@@ -138,6 +159,9 @@ export interface Message {
   sender_id: string;
   body: string;
   type?: 'text' | 'trade_offer';
+  message_type?: string;
+  trade_offer_id?: string | null;
+  trade_offer?: TradeOffer;
   created_at: string;
 }
 

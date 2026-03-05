@@ -16,13 +16,20 @@ import Badge from '@/components/ui/Badge';
 import Card from '@/components/ui/Card';
 import Avatar from '@/components/ui/Avatar';
 import Dialog from '@/components/ui/Dialog';
+import Modal from '@/components/ui/Modal';
 import Spinner from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
-import { ArrowLeft, Package, Pencil, Trash2, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Package, Pencil, Trash2, MessageCircle, ChevronLeft, ChevronRight, Star, Clock, CheckCircle2 } from 'lucide-react';
 
 interface ListingDetail extends BSTListing {
   profiles: Profile;
   pairs: { image_urls: string[] } | null;
+}
+
+interface ConversationPartner {
+  buyer_id: string;
+  username: string;
+  avatar_url: string | null;
 }
 
 export default function ListingDetailPage() {
@@ -38,6 +45,16 @@ export default function ListingDetailPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Mark as Sold modal state
+  const [soldModalOpen, setSoldModalOpen] = useState(false);
+  const [conversationPartners, setConversationPartners] = useState<ConversationPartner[]>([]);
+  const [selectedBuyerId, setSelectedBuyerId] = useState<string | null>(null);
+  const [loadingPartners, setLoadingPartners] = useState(false);
+
+  // Feedback state
+  const [isBuyer, setIsBuyer] = useState(false);
+  const [hasFeedback, setHasFeedback] = useState(false);
+
   const isOwner = user?.id === listing?.user_id;
 
   // Combine listing images and pair images
@@ -48,6 +65,7 @@ export default function ListingDetailPage() {
 
   useEffect(() => {
     async function load() {
+      if (!id) return;
       const supabase = createClient();
       const { data, error } = await supabase
         .from('bst_listings')
@@ -67,26 +85,99 @@ export default function ListingDetailPage() {
       const rep = await fetchReputation(item.user_id);
       setReputation(rep);
 
+      // Check if current user is the buyer
+      if (user) {
+        if (item.buyer_id === user.id) {
+          setIsBuyer(true);
+        } else {
+          // Also check conversations as fallback
+          const { data: convo } = await supabase
+            .from('conversations')
+            .select('id')
+            .eq('listing_id', id)
+            .eq('buyer_id', user.id)
+            .maybeSingle();
+          if (convo) setIsBuyer(true);
+        }
+
+        // Check if user already left feedback
+        const { data: fb } = await supabase
+          .from('feedback')
+          .select('id')
+          .eq('from_user_id', user.id)
+          .eq('listing_id', id)
+          .maybeSingle();
+        if (fb) setHasFeedback(true);
+      }
+
       setLoading(false);
     }
     load();
-  }, [id]);
+  }, [id, user]);
 
-  const handleMarkSold = async () => {
+  const openMarkSoldModal = async () => {
+    if (!listing) return;
+    setLoadingPartners(true);
+    setSoldModalOpen(true);
+
+    const supabase = createClient();
+    const { data: convos } = await supabase
+      .from('conversations')
+      .select('buyer_id, buyer:profiles!conversations_buyer_id_fkey(id, username, avatar_url)')
+      .eq('listing_id', listing.id);
+
+    if (convos) {
+      const partners: ConversationPartner[] = convos
+        .filter((c: any) => c.buyer && c.buyer_id)
+        .map((c: any) => ({
+          buyer_id: c.buyer_id,
+          username: c.buyer?.username ?? 'unknown',
+          avatar_url: c.buyer?.avatar_url ?? null,
+        }));
+      setConversationPartners(partners);
+      // Auto-select if there's only one buyer
+      if (partners.length === 1) {
+        setSelectedBuyerId(partners[0].buyer_id);
+      }
+    }
+    setLoadingPartners(false);
+  };
+
+  const confirmMarkSold = async () => {
     if (!listing) return;
     setActionLoading(true);
     const supabase = createClient();
+
+    const update: Record<string, unknown> = { status: 'sold' };
+    if (selectedBuyerId) {
+      update.buyer_id = selectedBuyerId;
+    }
+
     const { error } = await supabase
       .from('bst_listings')
-      .update({ status: 'sold' })
+      .update(update)
       .eq('id', listing.id)
       .eq('user_id', user?.id);
 
     if (error) {
       showToast('Failed to mark as sold', 'error');
     } else {
-      showToast('Listing marked as sold');
-      router.push('/bst');
+      // Create notification for buyer if selected
+      if (selectedBuyerId) {
+        await supabase.from('notifications').insert({
+          user_id: selectedBuyerId,
+          type: 'trade_accepted',
+          actor_id: user?.id,
+          target_id: listing.id,
+          target_type: 'listing',
+          body: `marked ${listing.brand} ${listing.model} as sold to you`,
+        });
+      }
+
+      showToast('Listing marked as sold!');
+      setSoldModalOpen(false);
+      // Refresh the page data
+      setListing({ ...listing, status: 'sold', buyer_id: selectedBuyerId } as ListingDetail);
     }
     setActionLoading(false);
   };
@@ -148,6 +239,13 @@ export default function ListingDetailPage() {
 
     router.push(`/messages/${newConvo.id}`);
   };
+
+  const canLeaveFeedback = !hasFeedback
+    && (listing?.status === 'sold' || listing?.status === 'pending_trade')
+    && user
+    && (isOwner || isBuyer)
+    && listing
+    && (listing.status === 'pending_trade' || listing.receipt_confirmed_at);
 
   const conditionLabels: Record<number, string> = {
     10: 'New',
@@ -286,6 +384,12 @@ export default function ListingDetailPage() {
           {listing.status === 'sold' && (
             <Badge variant="danger">Sold</Badge>
           )}
+          {listing.status === 'pending_trade' && (
+            <Badge variant="accent">
+              <Clock size={12} className="mr-1 inline" />
+              Pending Trade
+            </Badge>
+          )}
         </div>
 
         {/* Seller Card */}
@@ -326,14 +430,14 @@ export default function ListingDetailPage() {
           Listed {formatTimeAgo(listing.created_at)}
         </p>
 
-        {/* Actions */}
+        {/* Actions for ACTIVE listings */}
         {listing.status === 'active' && (
           <div className="space-y-3 pt-2">
             {isOwner ? (
               <>
                 <Button
                   className="w-full"
-                  onClick={handleMarkSold}
+                  onClick={openMarkSoldModal}
                   disabled={actionLoading}
                 >
                   Mark as Sold
@@ -371,14 +475,64 @@ export default function ListingDetailPage() {
           </div>
         )}
 
-        {/* Feedback link for sold listings */}
-        {listing.status === 'sold' && user && !isOwner && (
+        {/* Status banner for SOLD / PENDING_TRADE */}
+        {(listing.status === 'sold' || listing.status === 'pending_trade') && isOwner && (
+          <div className={`rounded-xl p-4 ${listing.status === 'sold' ? 'bg-welted-danger/10 border border-welted-danger/20' : 'bg-welted-accent/10 border border-welted-accent/20'}`}>
+            <div className="flex items-center gap-2 mb-1">
+              {listing.status === 'sold' ? (
+                <CheckCircle2 size={18} className="text-welted-danger" />
+              ) : (
+                <Clock size={18} className="text-welted-accent" />
+              )}
+              <span className="font-semibold text-sm text-welted-text">
+                {listing.status === 'sold' ? 'Sold' : 'Pending Trade'}
+              </span>
+            </div>
+            <p className="text-xs text-welted-text-muted">
+              {listing.status === 'sold' && !listing.receipt_confirmed_at
+                ? 'Waiting for buyer to confirm receipt.'
+                : listing.status === 'sold' && listing.receipt_confirmed_at
+                ? 'Buyer confirmed receipt. You can now leave feedback.'
+                : 'Trade in progress. Both parties need to confirm receipt.'}
+            </p>
+          </div>
+        )}
+
+        {/* Feedback button for SOLD/PENDING_TRADE listings */}
+        {canLeaveFeedback && (
           <Button
             variant="secondary"
             className="w-full"
-            onClick={() => router.push(`/bst/${listing.id}/feedback`)}
+            onClick={() => {
+              if (isOwner && listing.buyer_id) {
+                router.push(`/bst/${listing.id}/feedback?toUserId=${listing.buyer_id}&role=seller`);
+              } else {
+                router.push(`/bst/${listing.id}/feedback`);
+              }
+            }}
           >
+            <Star size={16} className="mr-1.5" />
             Leave Feedback
+          </Button>
+        )}
+
+        {/* Already left feedback */}
+        {hasFeedback && (listing.status === 'sold' || listing.status === 'pending_trade') && (
+          <p className="text-center text-sm text-welted-text-muted">
+            You&apos;ve already left feedback for this transaction.
+          </p>
+        )}
+
+        {/* Non-owner viewing sold listing (buyer who hasn't been recorded yet) */}
+        {listing.status === 'sold' && user && !isOwner && !isBuyer && (
+          <Button
+            variant="secondary"
+            className="w-full"
+            onClick={handleMessageSeller}
+            disabled={actionLoading}
+          >
+            <MessageCircle size={16} className="mr-1.5" />
+            Message Seller
           </Button>
         )}
       </div>
@@ -394,6 +548,92 @@ export default function ListingDetailPage() {
           { label: 'Delete', onClick: handleDelete, variant: 'danger' },
         ]}
       />
+
+      {/* Mark as Sold Modal */}
+      <Modal
+        open={soldModalOpen}
+        onClose={() => { setSoldModalOpen(false); setSelectedBuyerId(null); }}
+        title="Mark as Sold"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-welted-text-muted">
+            Who bought these boots? This lets them confirm receipt and leave feedback.
+          </p>
+
+          {loadingPartners ? (
+            <div className="flex justify-center py-6">
+              <Spinner size="md" />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {conversationPartners.map((partner) => (
+                <button
+                  key={partner.buyer_id}
+                  onClick={() => setSelectedBuyerId(partner.buyer_id)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                    selectedBuyerId === partner.buyer_id
+                      ? 'border-welted-accent bg-welted-accent/5'
+                      : 'border-welted-border bg-welted-card hover:border-welted-text-muted'
+                  }`}
+                >
+                  <Avatar url={partner.avatar_url} name={partner.username} size="md" />
+                  <span className="text-sm font-semibold text-welted-text">
+                    {partner.username}
+                  </span>
+                  {selectedBuyerId === partner.buyer_id && (
+                    <CheckCircle2 size={18} className="text-welted-accent ml-auto" />
+                  )}
+                </button>
+              ))}
+
+              {conversationPartners.length === 0 && (
+                <p className="text-sm text-welted-text-muted text-center py-4">
+                  No one has messaged you about this listing yet.
+                </p>
+              )}
+
+              {/* Off-platform option */}
+              <button
+                onClick={() => setSelectedBuyerId('off-platform')}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                  selectedBuyerId === 'off-platform'
+                    ? 'border-welted-accent bg-welted-accent/5'
+                    : 'border-welted-border bg-welted-card hover:border-welted-text-muted'
+                }`}
+              >
+                <div className="w-9 h-9 rounded-full bg-welted-input-bg flex items-center justify-center">
+                  <Package size={16} className="text-welted-text-muted" />
+                </div>
+                <span className="text-sm font-semibold text-welted-text">
+                  Someone else / Off-platform
+                </span>
+                {selectedBuyerId === 'off-platform' && (
+                  <CheckCircle2 size={18} className="text-welted-accent ml-auto" />
+                )}
+              </button>
+            </div>
+          )}
+
+          <Button
+            className="w-full"
+            onClick={() => {
+              if (selectedBuyerId === 'off-platform') {
+                setSelectedBuyerId(null);
+              }
+              confirmMarkSold();
+            }}
+            disabled={actionLoading || (!selectedBuyerId && conversationPartners.length > 0)}
+          >
+            {actionLoading ? (
+              <span className="flex items-center gap-2">
+                <Spinner size="sm" /> Marking...
+              </span>
+            ) : (
+              'Confirm Sale'
+            )}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

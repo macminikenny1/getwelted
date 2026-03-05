@@ -29,10 +29,10 @@ function getNotificationHref(notification: Notification): string {
     case 'follow':
       return notification.actor?.username ? `/user/${notification.actor.username}` : '#';
     case 'message':
-      return '/messages';
+      return notification.target_id ? `/messages/${notification.target_id}` : '/messages';
     case 'trade_offer':
     case 'trade_accepted':
-      return '/messages';
+      return notification.target_id ? `/messages/${notification.target_id}` : '/messages';
     default:
       return '#';
   }

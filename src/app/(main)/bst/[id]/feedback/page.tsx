@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { BSTListing, Profile } from '@/types';
@@ -10,6 +10,7 @@ import Avatar from '@/components/ui/Avatar';
 import Spinner from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
 import { ArrowLeft } from 'lucide-react';
+import { Suspense } from 'react';
 
 type Rating = 'positive' | 'neutral' | 'negative';
 
@@ -23,23 +24,33 @@ interface ListingWithProfile extends BSTListing {
   profiles: Profile;
 }
 
-export default function LeaveFeedbackPage() {
+function FeedbackForm() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { showToast } = useToast();
+
+  // Accept optional query params from the calling page (for trade flows)
+  const paramToUserId = searchParams.get('toUserId');
+  const paramRole = searchParams.get('role') as 'buyer' | 'seller' | null;
 
   const [listing, setListing] = useState<ListingWithProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState<Rating | null>(null);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+  const [targetProfile, setTargetProfile] = useState<Profile | null>(null);
 
   const maxComment = 200;
 
   useEffect(() => {
     async function load() {
+      if (!user) return;
       const supabase = createClient();
+
+      // Load listing with seller profile
       const { data, error } = await supabase
         .from('bst_listings')
         .select('*, profiles(id, username, avatar_url)')
@@ -52,11 +63,67 @@ export default function LeaveFeedbackPage() {
         return;
       }
 
-      setListing(data as ListingWithProfile);
+      const listingData = data as ListingWithProfile;
+      setListing(listingData);
+
+      // Determine who the feedback is for
+      const isBuyer = user.id !== listingData.user_id;
+      const role = paramRole || (isBuyer ? 'buyer' : 'seller');
+      let toUserId: string | null = null;
+
+      if (paramToUserId) {
+        // Explicit target from query params (trade flows)
+        toUserId = paramToUserId;
+      } else if (role === 'buyer') {
+        // Buyer leaving feedback for seller
+        toUserId = listingData.user_id;
+      } else {
+        // Seller leaving feedback for buyer - use buyer_id from listing
+        toUserId = (listingData as any).buyer_id || null;
+      }
+
+      // Guard: must have a valid target
+      if (!toUserId) {
+        console.error('No valid feedback target');
+        setLoading(false);
+        return;
+      }
+
+      // Guard: must be the buyer or seller to leave feedback
+      if (user.id !== listingData.user_id && user.id !== (listingData as any).buyer_id && !paramToUserId) {
+        console.error('User is not a participant in this transaction');
+        setLoading(false);
+        return;
+      }
+
+      // Fetch the target user's profile for display
+      if (toUserId !== listingData.user_id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url')
+          .eq('id', toUserId)
+          .single();
+        if (profile) setTargetProfile(profile as Profile);
+      } else {
+        setTargetProfile(listingData.profiles);
+      }
+
+      // Check for existing feedback
+      const { data: existing } = await supabase
+        .from('feedback')
+        .select('id')
+        .eq('from_user_id', user.id)
+        .eq('listing_id', listingData.id)
+        .maybeSingle();
+
+      if (existing) {
+        setAlreadySubmitted(true);
+      }
+
       setLoading(false);
     }
-    load();
-  }, [id]);
+    if (!authLoading) load();
+  }, [id, user, authLoading, paramToUserId, paramRole]);
 
   const handleSubmit = async () => {
     if (!user || !listing || !rating) return;
@@ -64,12 +131,26 @@ export default function LeaveFeedbackPage() {
     setSubmitting(true);
 
     const isBuyer = user.id !== listing.user_id;
-    const toUserId = isBuyer ? listing.user_id : listing.user_id;
-    const role = isBuyer ? 'buyer' : 'seller';
+    const role = paramRole || (isBuyer ? 'buyer' : 'seller');
+
+    let toUserId: string;
+    if (paramToUserId) {
+      toUserId = paramToUserId;
+    } else if (role === 'buyer') {
+      toUserId = listing.user_id;
+    } else {
+      toUserId = (listing as any).buyer_id;
+    }
+
+    if (!toUserId) {
+      showToast('Cannot determine feedback recipient', 'error');
+      setSubmitting(false);
+      return;
+    }
 
     const supabase = createClient();
 
-    // Check if feedback already exists
+    // Double-check for existing feedback
     const { data: existing } = await supabase
       .from('feedback')
       .select('id')
@@ -85,7 +166,7 @@ export default function LeaveFeedbackPage() {
 
     const { error } = await supabase.from('feedback').insert({
       from_user_id: user.id,
-      to_user_id: listing.user_id,
+      to_user_id: toUserId,
       listing_id: listing.id,
       rating,
       comment: comment.trim() || null,
@@ -122,6 +203,20 @@ export default function LeaveFeedbackPage() {
     );
   }
 
+  if (alreadySubmitted) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+        <p className="text-welted-text font-semibold mb-2">Feedback Already Submitted</p>
+        <p className="text-welted-text-muted text-sm">You&apos;ve already left feedback for this listing.</p>
+        <Button variant="secondary" className="mt-4" onClick={() => router.push(`/bst/${listing.id}`)}>
+          Back to Listing
+        </Button>
+      </div>
+    );
+  }
+
+  const displayProfile = targetProfile || listing.profiles;
+
   return (
     <div className="pb-24">
       {/* Header */}
@@ -133,16 +228,16 @@ export default function LeaveFeedbackPage() {
       </div>
 
       <div className="px-4 pt-5 space-y-6 max-w-lg mx-auto">
-        {/* Listing info */}
+        {/* Target user info */}
         <div className="flex items-center gap-3">
           <Avatar
-            url={listing.profiles?.avatar_url}
-            name={listing.profiles?.username || '?'}
+            url={displayProfile?.avatar_url}
+            name={displayProfile?.username || '?'}
             size="lg"
           />
           <div>
             <p className="text-sm font-bold text-welted-text">
-              {listing.profiles?.username}
+              {displayProfile?.username}
             </p>
             <p className="text-xs text-welted-text-muted">
               {listing.brand} {listing.model}
@@ -209,5 +304,13 @@ export default function LeaveFeedbackPage() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export default function LeaveFeedbackPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><Spinner size="lg" /></div>}>
+      <FeedbackForm />
+    </Suspense>
   );
 }
