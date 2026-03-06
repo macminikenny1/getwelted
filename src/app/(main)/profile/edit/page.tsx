@@ -97,9 +97,9 @@ export default function EditProfilePage() {
         await google.maps.importLibrary('places');
 
         const autocomplete = new google.maps.places.PlaceAutocompleteElement({
-          includedPrimaryTypes: ['street_address', 'premise', 'subpremise'],
-          includedRegionCodes: ['us'],
-        });
+          types: ['address'],
+          componentRestrictions: { country: 'us' },
+        } as any);
 
         // Style the element
         autocomplete.style.width = '100%';
