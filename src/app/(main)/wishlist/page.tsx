@@ -15,7 +15,7 @@ import Spinner from '@/components/ui/Spinner';
 import type { WishItem } from '@/types';
 
 const QUICK_BRANDS = [
-  'Red Wing', "Nick's", "White's", 'Viberg', 'Alden', 'Wesco',
+  'Red Wing', "Nicks", "White's", 'Viberg', 'Alden', 'Wesco',
   'Grant Stone', 'Truman', 'John Lofgren', 'Role Club',
 ];
 

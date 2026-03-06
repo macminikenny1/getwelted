@@ -63,7 +63,7 @@ export const BRAND_DATABASE: BrandProfile[] = [
   },
   {
     id: 'nicks',
-    name: "Nick's Handmade Boots",
+    name: "Nicks Handmade Boots",
     country: 'USA',
     founded: 1964,
     location: 'Spokane, Washington',
@@ -72,7 +72,7 @@ export const BRAND_DATABASE: BrandProfile[] = [
     construction: ['Handwelted', 'Stitchdown'],
     popularModels: ['Robert', 'Falcon', 'Traveler', 'Urban Logger', 'Builder Pro'],
     leathers: ['Seidel 1964', 'Chromexcel', 'Waxed Flesh', 'Roughout', 'Bison'],
-    description: "True handmade heritage. Every pair of Nick's is built by a single craftsman from start to finish. Originally made for Pacific Northwest loggers, now beloved by heritage enthusiasts. Fully customizable with dozens of leather and hardware options.",
+    description: "True handmade heritage. Every pair of Nicks is built by a single craftsman from start to finish. Originally made for Pacific Northwest loggers, now beloved by heritage enthusiasts. Fully customizable with dozens of leather and hardware options.",
     knownFor: 'Fully handmade, one-craftsman builds, extreme durability, PNW logger heritage',
   },
   {

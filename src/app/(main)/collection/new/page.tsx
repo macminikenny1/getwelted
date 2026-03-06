@@ -14,7 +14,7 @@ import ImageUpload from '@/components/ui/ImageUpload';
 import Spinner from '@/components/ui/Spinner';
 
 const KNOWN_BRANDS = [
-  'Red Wing', "Nick's", "White's", 'Viberg', 'Alden', 'Wesco',
+  'Red Wing', "Nicks", "White's", 'Viberg', 'Alden', 'Wesco',
   'Truman', 'Grant Stone', 'Thursday', 'Thorogood', 'Parkhurst',
   'Carmina', 'Crockett & Jones', 'Edward Green', 'John Lofgren', 'Role Club',
 ];

@@ -67,14 +67,14 @@ export const LEATHER_DATABASE: LeatherProfile[] = [
     darkeningRisk: 'high',
     scratchVisibility: 'medium',
     selfHealing: true,
-    description: "Combination-tanned (chrome + veg re-tanned) oil leather by Seidel Tanning Corp. Developed with Nick's Boots over two years to replicate vintage work boot leather. Starts pale and darkens dramatically with wear. Considered by many to be the toughest work boot leather available.",
+    description: "Combination-tanned (chrome + veg re-tanned) oil leather by Seidel Tanning Corp. Developed with Nicks Boots over two years to replicate vintage work boot leather. Starts pale and darkens dramatically with wear. Considered by many to be the toughest work boot leather available.",
     careNotes: [
       'Starts very light — darkening with wear and minimal product is the intended experience',
       'High oil content from hot-stuffing — over-conditioning will accelerate darkening rapidly',
       'Pull-up effects (color change at flex points) are normal and desirable',
       'Roughout versions accumulate dirt into the nap for a rugged aged look',
       "Obenauf's is excellent for waterproofing without over-softening",
-      "Nick's Boot Cream is the brand-recommended product if you want to stay in-family",
+      "Nicks Boot Cream is the brand-recommended product if you want to stay in-family",
     ],
   },
   {
@@ -145,7 +145,7 @@ export const LEATHER_DATABASE: LeatherProfile[] = [
     darkeningRisk: 'medium',
     scratchVisibility: 'low',
     selfHealing: true,
-    description: "Roughout leather impregnated with wax during tanning. Used by Nick's, White's, and Wesco. Extremely durable and weather-resistant. Scratches and scuffs largely self-heal.",
+    description: "Roughout leather impregnated with wax during tanning. Used by Nicks, White's, and Wesco. Extremely durable and weather-resistant. Scratches and scuffs largely self-heal.",
     careNotes: [
       'The wax content makes it largely self-maintaining',
       'Scratches and scuffs buff out or heal on their own',
