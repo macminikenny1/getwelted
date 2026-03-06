@@ -31,6 +31,16 @@ export default function MessagesPage() {
 
     async function load() {
       const supabase = createClient();
+
+      // Clear unread message/trade notifications so badge resets
+      supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', user!.id)
+        .eq('read', false)
+        .in('type', ['message', 'trade_offer', 'trade_accepted'])
+        .then(() => {});
+
       const { data, error } = await supabase
         .from('conversations')
         .select(

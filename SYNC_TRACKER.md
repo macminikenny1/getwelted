@@ -1,6 +1,6 @@
 # GetWelted — Web ↔ Mobile Feature Sync Tracker
 
-> **Last Updated:** 2026-03-05
+> **Last Updated:** 2026-03-06
 >
 > **Web App:** Next.js 16 + Supabase — `/welted/web/`
 > **Mobile App:** React Native + Expo — `/Projects/Welted/`
@@ -13,9 +13,9 @@
 
 | Status | Count |
 |--------|-------|
-| ✅ Both platforms in sync | 22 |
+| ✅ Both platforms in sync | 24 |
 | 🔧 Mobile needs backport from web | 16 |
-| 🔧 Web needs backport from mobile | 2 |
+| 🔧 Web needs backport from mobile | 0 |
 | 🔄 Data consistency issues | 3 |
 
 ---
@@ -77,7 +77,7 @@
 | Bookmarks page | ✅ | ✅ | — | — | — | |
 | Report post UI | ✅ | ✅ | — | — | — | Web: Dialog; Mobile: Alert.alert |
 | Zoom on post images | ✅ | ❌ | P2 | M | (same as Photo Zoom above) | Web: ZoomIn icon on PostCard; opens PhotoViewer |
-| Pinned post on profile | ❌ | ✅ | P3 | S | — | Mobile renders `pinned_post_id`; web has the type but doesn't display |
+| Pinned post on profile | ✅ | ✅ | — | — | — | Displayed on own profile + public profile pages |
 
 ### Collection / Pairs
 
@@ -115,7 +115,7 @@
 | Trade offers | ✅ | ✅ | — | — | — | |
 | Tracking numbers | ✅ | ❌ | P2 | M | — | Web shows carrier + tracking # on listings; mobile doesn't |
 | Shipping address reveal | ✅ | ❌ | P2 | S | — | Web reveals address during active trades; mobile doesn't |
-| Unread message badge | ❌ | ✅ | P3 | S | — | Mobile has `unreadBadge.ts` pub/sub; web has no badge on nav |
+| Unread message badge | ✅ | ✅ | — | — | — | Web: counts unread message/trade notifications, badge on Sidebar + MobileNav; clears on /messages load |
 
 ### Profile
 
@@ -183,10 +183,7 @@
 
 ## Web Backport Queue (from Mobile)
 
-| Feature | Priority | Size | Notes |
-|---------|----------|------|-------|
-| Pinned post on profile page | P3 | S | Type exists, just need to render it |
-| Unread message badge on nav | P3 | S | Add badge to messages nav item |
+All web backport items are complete. ✅
 
 ---
 

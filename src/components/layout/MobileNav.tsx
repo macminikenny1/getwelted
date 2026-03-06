@@ -15,9 +15,10 @@ const NAV_ITEMS = [
 
 interface MobileNavProps {
   currentPath: string;
+  unreadMessages?: number;
 }
 
-export default function MobileNav({ currentPath }: MobileNavProps) {
+export default function MobileNav({ currentPath, unreadMessages = 0 }: MobileNavProps) {
   const isActive = (href: string) => {
     if (href === '/') return currentPath === '/';
     return currentPath.startsWith(href);
@@ -28,6 +29,7 @@ export default function MobileNav({ currentPath }: MobileNavProps) {
       <div className="flex items-center justify-around px-1 py-2">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
+          const showBadge = href === '/messages' && unreadMessages > 0;
           return (
             <Link
               key={href}
@@ -36,7 +38,14 @@ export default function MobileNav({ currentPath }: MobileNavProps) {
                 active ? 'text-welted-accent' : 'text-welted-text-muted'
               }`}
             >
-              <Icon size={20} />
+              <div className="relative">
+                <Icon size={20} />
+                {showBadge && (
+                  <span className="absolute -top-1 -right-1 bg-welted-burgundy text-white text-[9px] font-bold min-w-[14px] h-3.5 flex items-center justify-center rounded-full px-0.5">
+                    {unreadMessages > 9 ? '9+' : unreadMessages}
+                  </span>
+                )}
+              </div>
               <span className="text-[10px] font-medium">{label}</span>
             </Link>
           );

@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, UserPlus, UserCheck, Grid3X3, Package, Star, ThumbsUp, ThumbsDown, Minus } from 'lucide-react';
+import { ArrowLeft, UserPlus, UserCheck, Grid3X3, Package, Star, ThumbsUp, ThumbsDown, Minus, Pin } from 'lucide-react';
 import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -39,6 +39,7 @@ export default function PublicProfilePage() {
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<Pick<Post, 'id' | 'image_url'>[]>([]);
+  const [pinnedPost, setPinnedPost] = useState<Pick<Post, 'id' | 'image_url' | 'caption'> | null>(null);
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [reputation, setReputation] = useState<ReputationData | null>(null);
@@ -82,6 +83,16 @@ export default function PublicProfilePage() {
     setFollowingCount(followingRes.count ?? 0);
     if (pairsRes.data) setPairs(pairsRes.data);
     if (feedbackRes.data) setFeedback(feedbackRes.data as unknown as FeedbackItem[]);
+
+    // Fetch pinned post if set
+    if (profileData.pinned_post_id) {
+      const { data: pinned } = await supabase
+        .from('posts')
+        .select('id, image_url, caption')
+        .eq('id', profileData.pinned_post_id)
+        .single();
+      if (pinned) setPinnedPost(pinned);
+    }
 
     // Check if current user follows this profile
     if (user && user.id !== targetId) {
@@ -246,6 +257,30 @@ export default function PublicProfilePage() {
       {/* Tab Content */}
       {activeTab === 'posts' && (
         <>
+          {/* Pinned Post */}
+          {pinnedPost && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Pin size={14} className="text-welted-accent" />
+                <span className="text-xs font-semibold text-welted-text-muted uppercase tracking-wide">Pinned</span>
+              </div>
+              <Link href={`/post/${pinnedPost.id}`} className="block bg-welted-card border border-welted-accent/30 rounded-xl overflow-hidden">
+                <div className="relative aspect-square">
+                  <Image
+                    src={imageSrc(pinnedPost.image_url)}
+                    alt={pinnedPost.caption || 'Pinned post'}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 672px"
+                  />
+                </div>
+                {pinnedPost.caption && (
+                  <p className="px-4 py-3 text-sm text-welted-text line-clamp-2">{pinnedPost.caption}</p>
+                )}
+              </Link>
+            </div>
+          )}
+
           {posts.length === 0 ? (
             <div className="text-center py-12 text-welted-text-muted text-sm">No posts yet.</div>
           ) : (

@@ -15,9 +15,10 @@ const NAV_ITEMS = [
 
 interface SidebarProps {
   currentPath: string;
+  unreadMessages?: number;
 }
 
-export default function Sidebar({ currentPath }: SidebarProps) {
+export default function Sidebar({ currentPath, unreadMessages = 0 }: SidebarProps) {
   const isActive = (href: string) => {
     if (href === '/') return currentPath === '/';
     return currentPath.startsWith(href);
@@ -37,6 +38,7 @@ export default function Sidebar({ currentPath }: SidebarProps) {
       <nav className="flex-1 py-4">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
+          const showBadge = href === '/messages' && unreadMessages > 0;
           return (
             <Link
               key={href}
@@ -47,7 +49,14 @@ export default function Sidebar({ currentPath }: SidebarProps) {
                   : 'text-welted-text-muted hover:text-welted-text hover:bg-welted-card'
               }`}
             >
-              <Icon size={22} className="shrink-0" />
+              <div className="relative shrink-0">
+                <Icon size={22} />
+                {showBadge && (
+                  <span className="absolute -top-1 -right-1 bg-welted-burgundy text-white text-[9px] font-bold min-w-[14px] h-3.5 flex items-center justify-center rounded-full px-0.5">
+                    {unreadMessages > 9 ? '9+' : unreadMessages}
+                  </span>
+                )}
+              </div>
               <span className="hidden lg:block text-sm font-semibold">{label}</span>
             </Link>
           );

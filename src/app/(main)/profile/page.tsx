@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Camera, Settings, LogOut, Bookmark, Heart, Shield, Grid3X3 } from 'lucide-react';
+import { Camera, Settings, LogOut, Bookmark, Heart, Shield, Grid3X3, Pin } from 'lucide-react';
 import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -24,6 +24,7 @@ export default function ProfilePage() {
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<Pick<Post, 'id' | 'image_url'>[]>([]);
+  const [pinnedPost, setPinnedPost] = useState<Pick<Post, 'id' | 'image_url' | 'caption'> | null>(null);
   const [pairsCount, setPairsCount] = useState(0);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
@@ -55,6 +56,17 @@ export default function ProfilePage() {
       setPairsCount(pairsRes.count ?? 0);
       setFollowersCount(followersRes.count ?? 0);
       setFollowingCount(followingRes.count ?? 0);
+
+      // Fetch pinned post if set
+      if (profileRes.data?.pinned_post_id) {
+        const { data: pinned } = await supabase
+          .from('posts')
+          .select('id, image_url, caption')
+          .eq('id', profileRes.data.pinned_post_id)
+          .single();
+        if (pinned) setPinnedPost(pinned);
+      }
+
       setLoading(false);
     }
 
@@ -191,6 +203,30 @@ export default function ProfilePage() {
           </Link>
         )}
       </div>
+
+      {/* Pinned Post */}
+      {pinnedPost && (
+        <div>
+          <div className="flex items-center gap-2 mb-3 px-1">
+            <Pin size={14} className="text-welted-accent" />
+            <h2 className="text-sm font-semibold text-welted-text-muted uppercase tracking-wide">Pinned Post</h2>
+          </div>
+          <Link href={`/post/${pinnedPost.id}`} className="block bg-welted-card border border-welted-accent/30 rounded-xl overflow-hidden">
+            <div className="relative aspect-square">
+              <Image
+                src={imageSrc(pinnedPost.image_url)}
+                alt={pinnedPost.caption || 'Pinned post'}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 672px"
+              />
+            </div>
+            {pinnedPost.caption && (
+              <p className="px-4 py-3 text-sm text-welted-text line-clamp-2">{pinnedPost.caption}</p>
+            )}
+          </Link>
+        </div>
+      )}
 
       {/* Posts Grid */}
       <div>
