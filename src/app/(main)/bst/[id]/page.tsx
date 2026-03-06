@@ -18,6 +18,7 @@ import Avatar from '@/components/ui/Avatar';
 import Dialog from '@/components/ui/Dialog';
 import Modal from '@/components/ui/Modal';
 import Spinner from '@/components/ui/Spinner';
+import PhotoViewer from '@/components/ui/PhotoViewer';
 import { useToast } from '@/components/ui/Toast';
 import { ArrowLeft, Package, Pencil, Trash2, MessageCircle, ChevronLeft, ChevronRight, Star, Clock, CheckCircle2 } from 'lucide-react';
 
@@ -42,6 +43,7 @@ export default function ListingDetailPage() {
   const [reputation, setReputation] = useState<ReputationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -291,8 +293,11 @@ export default function ListingDetailPage() {
       {/* Image Carousel */}
       {allImages.length > 0 ? (
         <div>
-          {/* Main Image */}
-          <div className="relative aspect-square bg-welted-input-bg">
+          {/* Main Image — click to zoom */}
+          <div
+            className="relative aspect-square bg-welted-input-bg cursor-zoom-in"
+            onClick={() => setViewerOpen(true)}
+          >
             <Image
               src={imageSrc(allImages[activeImage])}
               alt={`${listing.brand} ${listing.model}`}
@@ -303,13 +308,13 @@ export default function ListingDetailPage() {
             {allImages.length > 1 && (
               <>
                 <button
-                  onClick={() => setActiveImage((prev) => (prev - 1 + allImages.length) % allImages.length)}
+                  onClick={(e) => { e.stopPropagation(); setActiveImage((prev) => (prev - 1 + allImages.length) % allImages.length); }}
                   className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 rounded-full p-1.5 text-white hover:bg-black/70 transition-colors"
                 >
                   <ChevronLeft size={20} />
                 </button>
                 <button
-                  onClick={() => setActiveImage((prev) => (prev + 1) % allImages.length)}
+                  onClick={(e) => { e.stopPropagation(); setActiveImage((prev) => (prev + 1) % allImages.length); }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 rounded-full p-1.5 text-white hover:bg-black/70 transition-colors"
                 >
                   <ChevronRight size={20} />
@@ -323,6 +328,12 @@ export default function ListingDetailPage() {
               </div>
             )}
           </div>
+          <PhotoViewer
+            open={viewerOpen}
+            images={allImages}
+            initialIndex={activeImage}
+            onClose={() => setViewerOpen(false)}
+          />
 
           {/* Thumbnail Strip */}
           {allImages.length > 1 && (

@@ -18,6 +18,7 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Dialog from '@/components/ui/Dialog';
 import Spinner from '@/components/ui/Spinner';
+import PhotoViewer from '@/components/ui/PhotoViewer';
 import type { Pair, Post, CareLogEntry } from '@/types';
 
 const STATUS_CONFIG: Record<string, { label: string; variant: 'accent' | 'success' | 'muted' | 'danger' }> = {
@@ -41,6 +42,7 @@ export default function PairDetailPage() {
   const [editing, setEditing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   // Editable fields
   const [editBrand, setEditBrand] = useState('');
@@ -355,7 +357,10 @@ export default function PairDetailPage() {
         </div>
       ) : pair.image_urls?.length > 0 ? (
         <div className="mb-5">
-          <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-welted-input-bg">
+          <div
+            className="relative aspect-[4/3] rounded-xl overflow-hidden bg-welted-input-bg cursor-zoom-in"
+            onClick={() => setViewerOpen(true)}
+          >
             <Image
               src={imageSrc(pair.image_urls[currentImageIndex])}
               alt={`${pair.brand} ${pair.model}`}
@@ -366,13 +371,13 @@ export default function PairDetailPage() {
             {pair.image_urls.length > 1 && (
               <>
                 <button
-                  onClick={prevImage}
+                  onClick={(e) => { e.stopPropagation(); prevImage(); }}
                   className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 rounded-full p-1.5 transition-colors"
                 >
                   <ChevronLeft size={20} className="text-white" />
                 </button>
                 <button
-                  onClick={nextImage}
+                  onClick={(e) => { e.stopPropagation(); nextImage(); }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 rounded-full p-1.5 transition-colors"
                 >
                   <ChevronRight size={20} className="text-white" />
@@ -380,6 +385,12 @@ export default function PairDetailPage() {
               </>
             )}
           </div>
+          <PhotoViewer
+            open={viewerOpen}
+            images={pair.image_urls}
+            initialIndex={currentImageIndex}
+            onClose={() => setViewerOpen(false)}
+          />
           {/* Thumbnail strip */}
           {pair.image_urls.length > 1 && (
             <div className="flex gap-2 mt-3 overflow-x-auto pb-1">

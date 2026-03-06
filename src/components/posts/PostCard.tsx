@@ -4,12 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { imageSrc } from '@/lib/imageSrc';
-import { Heart, MessageCircle, Bookmark, MoreHorizontal, Trash2, Flag } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, MoreHorizontal, Trash2, Flag, ZoomIn } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import Avatar from '@/components/ui/Avatar';
 import Badge from '@/components/ui/Badge';
 import Dialog from '@/components/ui/Dialog';
+import PhotoViewer from '@/components/ui/PhotoViewer';
 import type { Post } from '@/types';
 
 const REPORT_REASONS = ['Spam', 'Inappropriate', 'Counterfeit', 'Harassment', 'Other'];
@@ -32,6 +33,7 @@ export default function PostCard({ post, onLike, currentUserId, isModerator, onD
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isOwn = currentUserId === post.user_id;
@@ -164,20 +166,38 @@ export default function PostCard({ post, onLike, currentUserId, isModerator, onD
       <Link href={`/post/${post.id}`}>
         <div className="relative w-full aspect-square bg-welted-bg overflow-hidden">
           {post.image_url ? (
-            <Image
-              src={imageSrc(post.image_url)}
-              alt={post.caption || 'Boot post'}
-              fill
-              className="object-cover"
-              sizes="(max-width: 672px) 100vw, 672px"
-              priority={priority}
-              unoptimized={!post.image_url.includes('supabase.co') && !post.image_url.includes('unsplash.com')}
-            />
+            <>
+              <Image
+                src={imageSrc(post.image_url)}
+                alt={post.caption || 'Boot post'}
+                fill
+                className="object-cover"
+                sizes="(max-width: 672px) 100vw, 672px"
+                priority={priority}
+                unoptimized={!post.image_url.includes('supabase.co') && !post.image_url.includes('unsplash.com')}
+              />
+              {/* Zoom button */}
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setViewerOpen(true); }}
+                className="absolute bottom-3 right-3 bg-black/50 hover:bg-black/70 rounded-full p-2 text-white transition-colors z-10"
+                aria-label="Zoom image"
+              >
+                <ZoomIn size={16} />
+              </button>
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center text-welted-text-muted text-4xl">👢</div>
           )}
         </div>
       </Link>
+      {post.image_url && (
+        <PhotoViewer
+          open={viewerOpen}
+          images={[post.image_url]}
+          onClose={() => setViewerOpen(false)}
+        />
+      )}
 
       {/* Actions */}
       <div className="px-4 py-3">

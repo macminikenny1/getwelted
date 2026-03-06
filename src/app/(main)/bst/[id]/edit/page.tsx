@@ -114,6 +114,16 @@ export default function EditListingPage() {
     setExistingImages(existingImages.filter((_, i) => i !== index));
   };
 
+  const handleReplaceNewImage = (index: number, file: File, preview: string) => {
+    URL.revokeObjectURL(newPreviews[index]);
+    const updatedImages = [...newImages];
+    const updatedPreviews = [...newPreviews];
+    updatedImages[index] = file;
+    updatedPreviews[index] = preview;
+    setNewImages(updatedImages);
+    setNewPreviews(updatedPreviews);
+  };
+
   const handleSubmit = async () => {
     if (!user || !listing) return;
     if (!effectiveBrand.trim() || !model.trim()) {
@@ -226,6 +236,7 @@ export default function EditListingPage() {
             previews={newPreviews}
             onAdd={handleAddImages}
             onRemove={handleRemoveNewImage}
+            onReplace={handleReplaceNewImage}
             maxImages={6 - existingImages.length}
           />
         </div>

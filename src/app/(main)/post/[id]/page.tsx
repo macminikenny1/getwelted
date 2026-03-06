@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/Toast';
 import Avatar from '@/components/ui/Avatar';
 import Spinner from '@/components/ui/Spinner';
 import Dialog from '@/components/ui/Dialog';
+import PhotoViewer from '@/components/ui/PhotoViewer';
 import { formatDate } from '@/lib/formatTime';
 import type { Post, Comment } from '@/types';
 
@@ -31,6 +32,7 @@ export default function PostDetailPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -143,10 +145,19 @@ export default function PostDetailPage() {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-64px)]">
-      {/* Post image */}
-      <div className="relative w-full aspect-square bg-welted-bg">
+      {/* Post image — click to zoom */}
+      <button
+        type="button"
+        onClick={() => setViewerOpen(true)}
+        className="relative w-full aspect-square bg-welted-bg cursor-zoom-in"
+      >
         <Image src={imageSrc(post.image_url)} alt={post.caption || 'Post'} fill className="object-cover" sizes="(max-width: 768px) 100vw, 672px" />
-      </div>
+      </button>
+      <PhotoViewer
+        open={viewerOpen}
+        images={[post.image_url]}
+        onClose={() => setViewerOpen(false)}
+      />
 
       {/* Post meta */}
       <div className="p-4">

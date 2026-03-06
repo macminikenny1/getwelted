@@ -103,6 +103,16 @@ export default function CreateListingPage() {
     setPreviews(newPreviews);
   };
 
+  const handleReplaceImage = (index: number, file: File, preview: string) => {
+    URL.revokeObjectURL(previews[index]);
+    const newImages = [...images];
+    const newPreviews = [...previews];
+    newImages[index] = file;
+    newPreviews[index] = preview;
+    setImages(newImages);
+    setPreviews(newPreviews);
+  };
+
   const handleSubmit = async () => {
     if (!user) return;
     if (!effectiveBrand.trim() || !model.trim()) {
@@ -188,6 +198,7 @@ export default function CreateListingPage() {
             previews={previews}
             onAdd={handleAddImages}
             onRemove={handleRemoveImage}
+            onReplace={handleReplaceImage}
             maxImages={6}
           />
         </div>

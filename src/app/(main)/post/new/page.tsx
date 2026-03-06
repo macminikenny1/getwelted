@@ -9,6 +9,7 @@ import { uploadImage } from '@/lib/uploadImage';
 import Chip from '@/components/ui/Chip';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
+import CropModal from '@/components/ui/CropModal';
 import { useToast } from '@/components/ui/Toast';
 import type { Pair } from '@/types';
 
@@ -27,6 +28,7 @@ export default function CreatePostPage() {
   const [selectedPair, setSelectedPair] = useState<Pair | null>(null);
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [cropOpen, setCropOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -85,6 +87,15 @@ export default function CreatePostPage() {
           <div className="relative w-full aspect-square rounded-xl overflow-hidden">
             <Image src={imagePreview} alt="Preview" fill className="object-cover" />
             <label htmlFor="post-image" className="absolute inset-0 cursor-pointer" />
+            {/* Crop button */}
+            <button
+              type="button"
+              onClick={() => setCropOpen(true)}
+              className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 rounded-full px-3 py-1.5 text-white text-xs font-medium transition-colors z-10 flex items-center gap-1.5"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
+              Crop
+            </button>
           </div>
         ) : (
           <label
@@ -96,6 +107,22 @@ export default function CreatePostPage() {
           </label>
         )}
       </div>
+
+      {/* Crop Modal */}
+      {imagePreview && (
+        <CropModal
+          open={cropOpen}
+          imageSrc={imagePreview}
+          aspectRatio={1}
+          onCrop={(croppedFile) => {
+            URL.revokeObjectURL(imagePreview);
+            setImageFile(croppedFile);
+            setImagePreview(URL.createObjectURL(croppedFile));
+            setCropOpen(false);
+          }}
+          onCancel={() => setCropOpen(false)}
+        />
+      )}
 
       {/* Caption */}
       <label className="block text-welted-text-muted text-xs font-semibold uppercase tracking-wider mb-2">Caption</label>

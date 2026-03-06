@@ -91,6 +91,16 @@ export default function AddPairPage() {
     setPreviews(newPreviews);
   };
 
+  const handleReplaceImage = (index: number, file: File, preview: string) => {
+    URL.revokeObjectURL(previews[index]);
+    const newImages = [...images];
+    const newPreviews = [...previews];
+    newImages[index] = file;
+    newPreviews[index] = preview;
+    setImages(newImages);
+    setPreviews(newPreviews);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -188,6 +198,7 @@ export default function AddPairPage() {
             previews={previews}
             onAdd={handleAddImages}
             onRemove={handleRemoveImage}
+            onReplace={handleReplaceImage}
             maxImages={10}
           />
         </div>
