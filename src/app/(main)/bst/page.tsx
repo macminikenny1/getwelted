@@ -21,8 +21,9 @@ import Spinner from '@/components/ui/Spinner';
 import { SlidersHorizontal, Plus, Package } from 'lucide-react';
 
 const BRANDS = [
-  'Alden', 'Viberg', 'White\'s', 'Nick\'s', 'Red Wing',
+  'Alden', 'Viberg', 'White\'s', 'Nicks', 'Red Wing',
   'Grant Stone', 'Parkhurst', 'Truman', 'Wesco', 'Crockett & Jones',
+  'Grenson', 'Tricker\'s',
 ];
 const SIZES = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 14, 15];
 const WIDTHS = ['B', 'C', 'D', 'E', 'EE', 'EEE'];

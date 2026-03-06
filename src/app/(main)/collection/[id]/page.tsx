@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
-  ArrowLeft, Edit3, Trash2, Plus, Minus, Save, X,
+  ArrowLeft, Edit3, Trash2, Plus, Minus, Save, X, Camera, Loader2,
   Droplets, ScrollText, Wrench, Package, ChevronLeft, ChevronRight, Star,
 } from 'lucide-react';
 import { imageSrc } from '@/lib/imageSrc';
 import { createClient } from '@/lib/supabase/client';
+import { uploadImages } from '@/lib/uploadImage';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/Toast';
 import Card from '@/components/ui/Card';
@@ -52,6 +53,13 @@ export default function PairDetailPage() {
   const [editStatus, setEditStatus] = useState('');
   const [editNotes, setEditNotes] = useState('');
 
+  // Image editing
+  const [newImages, setNewImages] = useState<File[]>([]);
+  const [newPreviews, setNewPreviews] = useState<string[]>([]);
+  const [removedUrls, setRemovedUrls] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
   const fetchData = useCallback(async () => {
     const supabase = createClient();
 
@@ -93,33 +101,7 @@ export default function PairDetailPage() {
     await supabase.from('pairs').update({ wear_count: newCount }).eq('id', pair.id).eq('user_id', user?.id);
   };
 
-  const handleSaveEdit = async () => {
-    if (!pair) return;
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('pairs')
-      .update({
-        brand: editBrand.trim(),
-        model: editModel.trim(),
-        leather_type: editLeatherType.trim() || null,
-        colorway: editColorway.trim() || null,
-        size_us: editSizeUs ? parseFloat(editSizeUs) : null,
-        width: editWidth.trim() || null,
-        condition: editCondition ? parseInt(editCondition) : null,
-        status: editStatus,
-        notes: editNotes.trim() || null,
-      })
-      .eq('id', pair.id)
-      .eq('user_id', user?.id);
-
-    if (error) {
-      showToast('Failed to save changes.', 'error');
-    } else {
-      showToast('Changes saved!');
-      setEditing(false);
-      fetchData();
-    }
-  };
+  // handleSaveEdit is now replaced by handleSaveWithImages which also handles photo changes
 
   const handleDelete = async () => {
     if (!pair) return;
@@ -165,6 +147,103 @@ export default function PairDetailPage() {
     }
   };
 
+  // Reset image editing state when entering/leaving edit mode
+  const startEditing = () => {
+    setEditing(true);
+    setNewImages([]);
+    setNewPreviews([]);
+    setRemovedUrls([]);
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setNewImages([]);
+    newPreviews.forEach((url) => URL.revokeObjectURL(url));
+    setNewPreviews([]);
+    setRemovedUrls([]);
+  };
+
+  const handleAddNewImages = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const currentTotal = (pair?.image_urls?.length || 0) - removedUrls.length + newImages.length;
+    const remaining = 10 - currentTotal;
+    const toAdd = files.slice(0, remaining);
+    setNewImages((prev) => [...prev, ...toAdd]);
+    setNewPreviews((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))]);
+    if (imageInputRef.current) imageInputRef.current.value = '';
+  };
+
+  const handleRemoveExistingImage = (url: string) => {
+    setRemovedUrls((prev) => [...prev, url]);
+    if (pair?.image_urls[currentImageIndex] === url) {
+      setCurrentImageIndex(0);
+    }
+  };
+
+  const handleRemoveNewImage = (index: number) => {
+    URL.revokeObjectURL(newPreviews[index]);
+    setNewImages((prev) => prev.filter((_, i) => i !== index));
+    setNewPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveWithImages = async () => {
+    if (!pair || !user) return;
+    setUploadingImages(true);
+
+    try {
+      const supabase = createClient();
+
+      // Upload new images
+      let uploadedUrls: string[] = [];
+      if (newImages.length > 0) {
+        uploadedUrls = await uploadImages(newImages, 'post-images', user.id);
+      }
+
+      // Combine: existing (minus removed) + new uploads
+      const keptUrls = (pair.image_urls || []).filter((url) => !removedUrls.includes(url));
+      const finalUrls = [...keptUrls, ...uploadedUrls];
+
+      const { error } = await supabase
+        .from('pairs')
+        .update({
+          brand: editBrand.trim(),
+          model: editModel.trim(),
+          leather_type: editLeatherType.trim() || null,
+          colorway: editColorway.trim() || null,
+          size_us: editSizeUs ? parseFloat(editSizeUs) : null,
+          width: editWidth.trim() || null,
+          condition: editCondition ? parseInt(editCondition) : null,
+          status: editStatus,
+          notes: editNotes.trim() || null,
+          image_urls: finalUrls,
+        })
+        .eq('id', pair.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      showToast('Changes saved!');
+      setEditing(false);
+      setNewImages([]);
+      newPreviews.forEach((url) => URL.revokeObjectURL(url));
+      setNewPreviews([]);
+      setRemovedUrls([]);
+      setCurrentImageIndex(0);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to save changes.', 'error');
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  // Compute visible images for edit mode
+  const existingImages = (pair?.image_urls || []).filter((url) => !removedUrls.includes(url));
+  const totalImageCount = existingImages.length + newImages.length;
+  const canAddMoreImages = totalImageCount < 10;
+
   if (loading || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -198,16 +277,20 @@ export default function PairDetailPage() {
         <div className="flex items-center gap-2">
           {editing ? (
             <>
-              <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+              <Button variant="ghost" size="sm" onClick={cancelEditing}>
                 <X size={16} className="mr-1" /> Cancel
               </Button>
-              <Button size="sm" onClick={handleSaveEdit}>
-                <Save size={16} className="mr-1" /> Save
+              <Button size="sm" onClick={handleSaveWithImages} disabled={uploadingImages}>
+                {uploadingImages ? (
+                  <><Loader2 size={16} className="mr-1 animate-spin" /> Saving...</>
+                ) : (
+                  <><Save size={16} className="mr-1" /> Save</>
+                )}
               </Button>
             </>
           ) : (
             <>
-              <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
+              <Button variant="ghost" size="sm" onClick={startEditing}>
                 <Edit3 size={16} />
               </Button>
               <Button variant="danger" size="sm" onClick={() => setDeleteOpen(true)}>
@@ -218,8 +301,59 @@ export default function PairDetailPage() {
         </div>
       </div>
 
-      {/* Image Carousel */}
-      {pair.image_urls?.length > 0 ? (
+      {/* Image Carousel / Editor */}
+      {editing ? (
+        <div className="mb-5">
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleAddNewImages}
+            className="hidden"
+          />
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {/* Existing images (minus removed) */}
+            {existingImages.map((url) => (
+              <div key={url} className="relative w-24 h-24 rounded-lg overflow-hidden shrink-0">
+                <Image src={imageSrc(url)} alt="Existing" fill className="object-cover" sizes="96px" />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveExistingImage(url)}
+                  className="absolute top-1 right-1 bg-black/60 rounded-full p-1 hover:bg-black/80 transition-colors"
+                >
+                  <X size={12} className="text-white" />
+                </button>
+              </div>
+            ))}
+            {/* New images being added */}
+            {newPreviews.map((src, i) => (
+              <div key={`new-${i}`} className="relative w-24 h-24 rounded-lg overflow-hidden shrink-0 ring-2 ring-welted-accent/50">
+                <Image src={src} alt={`New ${i + 1}`} fill className="object-cover" sizes="96px" />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveNewImage(i)}
+                  className="absolute top-1 right-1 bg-black/60 rounded-full p-1 hover:bg-black/80 transition-colors"
+                >
+                  <X size={12} className="text-white" />
+                </button>
+              </div>
+            ))}
+            {/* Add button */}
+            {canAddMoreImages && (
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                className="w-24 h-24 rounded-lg border-2 border-dashed border-welted-border hover:border-welted-accent/50 flex flex-col items-center justify-center shrink-0 transition-colors gap-1"
+              >
+                <Camera size={20} className="text-welted-text-muted" />
+                <span className="text-[10px] text-welted-text-muted">Add</span>
+              </button>
+            )}
+          </div>
+          <p className="text-welted-text-muted text-xs mt-2">{totalImageCount}/10 photos</p>
+        </div>
+      ) : pair.image_urls?.length > 0 ? (
         <div className="mb-5">
           <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-welted-input-bg">
             <Image

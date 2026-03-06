@@ -17,6 +17,7 @@ import type { WishItem } from '@/types';
 const QUICK_BRANDS = [
   'Red Wing', "Nicks", "White's", 'Viberg', 'Alden', 'Wesco',
   'Grant Stone', 'Truman', 'John Lofgren', 'Role Club',
+  'Grenson', "Tricker's",
 ];
 
 export default function WishListPage() {

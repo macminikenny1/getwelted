@@ -17,6 +17,7 @@ const KNOWN_BRANDS = [
   'Red Wing', "Nicks", "White's", 'Viberg', 'Alden', 'Wesco',
   'Truman', 'Grant Stone', 'Thursday', 'Thorogood', 'Parkhurst',
   'Carmina', 'Crockett & Jones', 'Edward Green', 'John Lofgren', 'Role Club',
+  'Grenson', "Tricker's",
 ];
 
 export default function AddPairPage() {

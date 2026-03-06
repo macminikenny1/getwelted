@@ -17,8 +17,9 @@ import { useToast } from '@/components/ui/Toast';
 import { ArrowLeft, X } from 'lucide-react';
 
 const BRANDS = [
-  'Alden', 'Viberg', 'White\'s', 'Nick\'s', 'Red Wing',
+  'Alden', 'Viberg', 'White\'s', 'Nicks', 'Red Wing',
   'Grant Stone', 'Parkhurst', 'Truman', 'Wesco', 'Crockett & Jones',
+  'Grenson', 'Tricker\'s',
 ];
 
 const CONDITIONS = [

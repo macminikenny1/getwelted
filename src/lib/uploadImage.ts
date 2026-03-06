@@ -71,7 +71,8 @@ export async function uploadImage(
   const supabase = createClient();
   const ext = processedFile.name.split('.').pop()?.toLowerCase() || 'jpg';
   const safeExt = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg';
-  const path = `${userId}/${Date.now()}.${safeExt}`;
+  const uniqueId = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  const path = `${userId}/${uniqueId}.${safeExt}`;
 
   const { error } = await supabase.storage.from(bucket).upload(path, processedFile, {
     contentType: processedFile.type || 'image/jpeg',

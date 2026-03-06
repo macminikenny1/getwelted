@@ -12,7 +12,7 @@ import Spinner from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
 import type { Pair } from '@/types';
 
-const BRANDS = ['Red Wing', "Nicks", "White's", 'Viberg', 'Alden', 'Wesco', 'Truman', 'Grant Stone', 'Thursday', 'Other'];
+const BRANDS = ['Red Wing', "Nicks", "White's", 'Viberg', 'Alden', 'Wesco', 'Truman', 'Grant Stone', 'Thursday', 'Grenson', "Tricker's", 'Other'];
 
 export default function CreatePostPage() {
   const router = useRouter();
