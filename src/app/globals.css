@@ -40,6 +40,271 @@ body {
   outline-offset: 2px;
 }
 
+/* ===== Boot Shelf Display ===== */
+
+.shelf-frame {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.shelf-crown {
+  height: 14px;
+  background: linear-gradient(90deg, #3D2B1A 0%, #6B4C30 30%, #5A3D26 50%, #6B4C30 70%, #3D2B1A 100%);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+  position: relative;
+  z-index: 2;
+}
+
+.shelf-crown::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(200,134,74,0.15), transparent);
+}
+
+.shelf-body {
+  display: flex;
+  min-height: 200px;
+}
+
+.shelf-side-panel {
+  width: 10px;
+  background: linear-gradient(180deg, #2A1F14, #3D2B1A, #2A1F14);
+  flex-shrink: 0;
+}
+
+.shelf-content {
+  flex: 1;
+  background: var(--color-welted-bg);
+}
+
+.shelf-base {
+  height: 10px;
+  background: linear-gradient(180deg, #5A3D26, #3D2B1A, #2A1F14);
+  position: relative;
+  z-index: 2;
+}
+
+/* Individual shelf row */
+.shelf-row-glow {
+  height: 24px;
+  background: linear-gradient(180deg, rgba(200,134,74,0.10) 0%, transparent 100%);
+}
+
+.shelf-row-boots {
+  display: flex;
+  justify-content: space-evenly;
+  padding: 10px 12px 8px;
+  gap: 16px;
+}
+
+.shelf-plank {
+  height: 16px;
+  background: linear-gradient(90deg,
+    #3D2B1A 0%,
+    #5A3D26 15%,
+    #4A3520 35%,
+    #6B4C30 50%,
+    #4A3520 65%,
+    #5A3D26 85%,
+    #3D2B1A 100%
+  );
+  position: relative;
+}
+
+/* Subtle wood grain lines */
+.shelf-plank::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 40px,
+    rgba(0,0,0,0.06) 40px,
+    rgba(0,0,0,0.06) 41px
+  );
+}
+
+.shelf-lip {
+  height: 8px;
+  background: linear-gradient(180deg, #4A3520, #2A1F14);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 2px 3px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 1;
+}
+
+.shelf-cast-shadow {
+  height: 18px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.22) 0%, transparent 100%);
+}
+
+/* Boot item on shelf */
+.shelf-boot-item {
+  flex: 1;
+  max-width: 200px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.shelf-boot-item:hover {
+  transform: translateY(-3px);
+}
+
+.shelf-boot-item:hover .shelf-boot-image {
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 20px rgba(200,134,74,0.08);
+}
+
+.shelf-boot-image {
+  width: 100%;
+  padding-bottom: 115%;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  background: var(--color-welted-card);
+  transition: box-shadow 0.2s ease;
+}
+
+.shelf-boot-image > * {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.shelf-boot-shadow {
+  height: 8px;
+  margin: -3px 6px 0;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.shelf-boot-label {
+  margin-top: 6px;
+  padding: 0 4px;
+}
+
+.shelf-boot-brand {
+  color: var(--color-welted-accent);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+
+.shelf-boot-model {
+  color: var(--color-welted-text);
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty spot */
+.shelf-empty-spot {
+  width: 100%;
+  padding-bottom: 115%;
+  border: 1px dashed var(--color-welted-border);
+  border-radius: 6px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: rgba(28, 24, 20, 0.2);
+}
+
+.shelf-empty-spot > * {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.shelf-empty-spot:hover {
+  border-color: var(--color-welted-accent);
+  background: rgba(200, 134, 74, 0.05);
+}
+
+/* Status overlays */
+.shelf-overlay-stored {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 13, 11, 0.45);
+  border-radius: 6px;
+}
+
+.shelf-overlay-sold {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 13, 11, 0.6);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shelf-sold-stamp {
+  color: var(--color-welted-burgundy-light);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  transform: rotate(-12deg);
+}
+
+/* Entrance animation */
+@keyframes shelf-boot-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.shelf-boot-animate {
+  animation: shelf-boot-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* View toggle */
+.view-toggle {
+  display: inline-flex;
+  border-radius: 8px;
+  border: 1px solid var(--color-welted-border);
+  overflow: hidden;
+}
+
+.view-toggle-btn {
+  width: 36px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--color-welted-text-muted);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-size: 16px;
+}
+
+.view-toggle-btn:hover {
+  color: var(--color-welted-text);
+}
+
+.view-toggle-btn.active {
+  background: rgba(200, 134, 74, 0.13);
+  color: var(--color-welted-accent);
+}
+
 /* Google Places Autocomplete styling */
 .gmp-autocomplete-container gmp-placeautocomplete {
   width: 100%;

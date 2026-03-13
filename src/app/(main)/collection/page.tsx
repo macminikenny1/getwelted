@@ -12,7 +12,11 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import Avatar from '@/components/ui/Avatar';
+import BootShelfView from '@/components/shelf/BootShelfView';
+import ViewToggle from '@/components/shelf/ViewToggle';
 import type { Pair, Profile } from '@/types';
+
+type ViewMode = 'grid' | 'shelf';
 
 const STATUS_CONFIG: Record<string, { label: string; variant: 'accent' | 'success' | 'muted' | 'danger' }> = {
   active: { label: 'Active', variant: 'success' },
@@ -39,6 +43,17 @@ export default function CollectionPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('welted-collection-view') as ViewMode) || 'grid';
+    }
+    return 'grid';
+  });
+
+  const handleViewToggle = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem('welted-collection-view', mode);
+  };
 
   const fetchPairs = useCallback(async () => {
     if (!user) return;
@@ -162,10 +177,61 @@ export default function CollectionPage() {
     );
   }
 
+  // Demo mode: show shelf preview with mock data when not signed in
   if (!user) {
+    const demoPairs: Pair[] = [
+      { id: 'd1', user_id: '', brand: 'Nicks', model: '365 MTO', leather_type: 'Seidel 1964', colorway: 'Brown', last_name: null, size_us: 10.5, width: 'EE', purchase_date: null, purchase_price: null, condition: 9, status: 'active', notes: null, image_urls: ['https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=400&q=80'], is_roughout: false, is_public: true, wear_count: 42, created_at: '' },
+      { id: 'd2', user_id: '', brand: 'Viberg', model: 'Service Boot', leather_type: 'Chromexcel', colorway: 'Color 8', last_name: null, size_us: 10, width: 'D', purchase_date: null, purchase_price: null, condition: 8, status: 'active', notes: null, image_urls: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80'], is_roughout: false, is_public: true, wear_count: 28, created_at: '' },
+      { id: 'd3', user_id: '', brand: 'Red Wing', model: 'Iron Ranger 8111', leather_type: 'Amber Harness', colorway: 'Amber', last_name: null, size_us: 11, width: 'D', purchase_date: null, purchase_price: null, condition: 7, status: 'active', notes: null, image_urls: ['https://images.unsplash.com/photo-1605812860427-4024433a70fd?w=400&q=80'], is_roughout: false, is_public: true, wear_count: 85, created_at: '' },
+      { id: 'd4', user_id: '', brand: "White's", model: 'Semi-Dress', leather_type: 'British Tan CXL', colorway: 'British Tan', last_name: null, size_us: 10.5, width: 'E', purchase_date: null, purchase_price: null, condition: 9, status: 'stored', notes: null, image_urls: ['https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=400&q=80'], is_roughout: false, is_public: true, wear_count: 12, created_at: '' },
+      { id: 'd5', user_id: '', brand: 'Grant Stone', model: 'Diesel Boot', leather_type: 'Crimson CXL', colorway: 'Crimson', last_name: null, size_us: 10.5, width: 'D', purchase_date: null, purchase_price: null, condition: null, status: 'on_order', notes: null, image_urls: [], is_roughout: false, is_public: true, wear_count: 0, created_at: '' },
+    ];
+
     return (
-      <div className="p-4 text-center">
-        <p className="text-welted-text-muted">Sign in to view your collection.</p>
+      <div className="p-4 pb-24">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h1 className="text-xl font-bold text-welted-text">Boot Shelf Preview</h1>
+            <p className="text-welted-text-muted text-sm mt-0.5">5 demo pairs</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <ViewToggle viewMode={viewMode} onToggle={handleViewToggle} />
+          </div>
+        </div>
+        {viewMode === 'shelf' ? (
+          <BootShelfView pairs={demoPairs} />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {demoPairs.map((pair) => {
+              const status = STATUS_CONFIG[pair.status] || STATUS_CONFIG.active;
+              const imageUrl = pair.image_urls?.[0];
+              return (
+                <div key={pair.id} className="block">
+                  <Card hover className="overflow-hidden">
+                    <div className="relative w-full bg-welted-input-bg">
+                      {imageUrl ? (
+                        <div className="relative aspect-[4/3]">
+                          <Image src={imageUrl} alt={`${pair.brand} ${pair.model}`} fill className="object-cover" sizes="25vw" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center aspect-[4/3]">
+                          <Package size={40} className="text-welted-text-muted/30" />
+                        </div>
+                      )}
+                      <div className="absolute top-2 right-2">
+                        <Badge variant={status.variant}>{status.label}</Badge>
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-welted-text-muted text-[10px] font-semibold uppercase tracking-wider">{pair.brand}</p>
+                      <p className="text-welted-text font-bold text-sm mt-0.5 truncate">{pair.model}</p>
+                    </div>
+                  </Card>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   }
@@ -181,6 +247,7 @@ export default function CollectionPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <ViewToggle viewMode={viewMode} onToggle={handleViewToggle} />
           <Button variant="ghost" size="sm" onClick={handleRefresh} disabled={refreshing}>
             <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
           </Button>
@@ -193,7 +260,7 @@ export default function CollectionPage() {
         </div>
       </div>
 
-      {/* Grid */}
+      {/* Collection Display */}
       {pairs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Package size={48} className="text-welted-text-muted mb-4" />
@@ -208,7 +275,7 @@ export default function CollectionPage() {
             </Button>
           </Link>
         </div>
-      ) : (
+      ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {pairs.map((pair, index) => {
             const status = STATUS_CONFIG[pair.status] || STATUS_CONFIG.active;
@@ -262,6 +329,8 @@ export default function CollectionPage() {
             );
           })}
         </div>
+      ) : (
+        <BootShelfView pairs={pairs} />
       )}
 
       {/* Transaction History */}
