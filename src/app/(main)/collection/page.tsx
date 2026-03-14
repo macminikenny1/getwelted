@@ -45,9 +45,9 @@ export default function CollectionPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== 'undefined') {
-      return (localStorage.getItem('welted-collection-view') as ViewMode) || 'grid';
+      return (localStorage.getItem('welted-collection-view') as ViewMode) || 'shelf';
     }
-    return 'grid';
+    return 'shelf';
   });
 
   const handleViewToggle = (mode: ViewMode) => {
